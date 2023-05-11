@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Difference-in-Differences with Multiple Time Periods</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Mingyu Qi" />
+    <meta name="date" content="2023-05-11" />
+    <script src="libs/header-attrs-2.20/header-attrs.js"></script>
+    <link href="libs/remark-css-0.0.1/tamu.css" rel="stylesheet" />
+    <link href="libs/remark-css-0.0.1/tamu-fonts.css" rel="stylesheet" />
+    <script src="libs/kePrint-0.0.1/kePrint.js"></script>
+    <link href="libs/lightable-0.0.1/lightable.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# Difference-in-Differences with Multiple Time Periods
+]
+.author[
+### Mingyu Qi
+]
+.institute[
+### The University of Chicago
+]
+.date[
+### 2023-05-11
+]
+
+---
+
+
+
+
+
+
+# .center.pull[Outline of Lecture]
+
+`\(\hspace{2cm}\)`
+
+1. Overview of Difference-in-Differences (DiD)
+
+2. Two-Way Fixed Effects (TWFE) Estimator
+
+3. Problems with Using TWFE Estimator for DiD with Multiple Time Periods
+
+4. Simulation Examples
+
+5. Alternative Difference-in-Differences Estimators
+
+6. Conclusion and Recommendations
+
+---
+# .center.pull[Difference-in-Differences]
+
+`\(\hspace{2cm}\)`
+
+- Revisit **Card and Krueger (1993)** minimum wage and employment study comparing NJ and PA.
+
+- 2 units and 2 time periods.
+
+- 1 treated unit (T), which receives treatment in the second period. 
+
+- 1 control unit (C), which is never treated.  
+
+---
+
+# .center.pull[Difference-in-Differences]
+
+&lt;img src="DID_files/figure-html/d1-1.png" width="720" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+# .center.pull[Difference-in-Differences]
+
+- Building upon **Angrist &amp; Pischke (2008, p. 228)** we can think of the simple 2x2 DiD as a fixed effects estimator.
+
+- Potential Outcomes 
+  - `\(Y_{i, t}^0\)` = value of dependent variable for unit `\(i\)` in period `\(t\)` without treatment.
+  - `\(Y_{i, t}^1\)` = value of dependent variable for unit `\(i\)` in period `\(t\)` with treatment.
+  
+- The expected outcome is a *linear function* of unit and time fixed effects:
+`$$E[{Y_{i, t}^0}] =\alpha_i + \alpha_t$$`
+`$$E[{Y_{i, t}^1}] =\alpha_i + \alpha_t + \color{maroon}{\delta} D_{st}$$`
+- The goal of DiD is to get an *unbiased estimate* of the treatment effect `\(\color{maroon}{\delta}\)`.
+
+
+---
+# .center.pull[Difference-in-Differences]
+
+- Difference in expectations for the *control* unit between times t = 1 and t = 0:
+`$$\begin{align*} E[Y_{C, 1}^0] &amp; = \alpha_1 + \alpha_C \\ E[Y_{C, 0}^0] &amp; = \alpha_0 + \alpha_C  \\ E[Y_{C, 1}^0] - E[Y_{C, 0}^0] &amp; = \alpha_1 - \alpha_0 \end{align*}$$`
+ 
+- Now do the same thing for the *treated* unit:
+   `$$\begin{align*} E[Y_{T, 1}^1] &amp; = \alpha_1 + \alpha_T + \color{maroon}{\delta} \\ E[Y_{T, 0}^1] &amp; = \alpha_0 + \alpha_T  \\ E[Y_{T, 1}^1] - E[Y_{T, 0}^1] &amp; = \alpha_1 - \alpha_0 + \color{maroon}{\delta} \end{align*}$$`
+- If we assume the linear structure of DiD, then unbiased estimate of `\(\color{maroon}{\delta}\)` is:
+
+`$$\color{maroon}{\delta} =
+    \begin{align*} &amp; \left( E[Y_{T, 1}^1] - E[Y_{T, 0}^1] \right) - \left( E[Y_{C, 1}^0] - E[Y_{C, 0}^0] \right) \end{align*}$$`
+
+---
+
+# .center.pull[Two-Way Differencing]
+
+&lt;img src="DID_files/figure-html/d2-1.png" width="720" style="display: block; margin: auto;" /&gt;
+
+---
+
+# .center.pull[Regression DiD]
+
+The DiD can be estimated through linear regression of the form:
+
+`$$\tag{1} y_{it} = \alpha + \beta_1 TREAT_i + \beta_2 POST_t + \color{maroon}{\delta} (TREAT_i \cdot POST_t) + \epsilon_{it}$$`
+
+The coefficients from the regression estimate in (1) recover the same parameters as the two-way differencing performed above:
+`$$\begin{align*} 
+    \alpha &amp;= E[y_{it} | i = C, t = 0] = \alpha_0 + \alpha_C \\
+    \\
+    \beta_1 &amp;= E[y_{it} | i = T, t = 0] - E[y_{it} | i = C, t= 0] \\ 
+    &amp;= (\alpha_0 + \alpha_T) - (\alpha_0 + \alpha_C) = \alpha_T - \alpha_C \\
+    \\
+    \beta_2 &amp;= E[y_{it} | i = C, t = 1] - E[y_{it} | i = C, t = 0] \\ 
+    &amp;= (\alpha_1 + \alpha_C) - (\alpha_0 + \alpha_C) = \alpha_1 - \alpha_0 \\
+    \\
+    \color{maroon}{\delta} &amp;= \left(E[y_{it} | i = T, t = 1] - E[y_{it} | i = T, t = 0] \right) - \\
+    &amp;\hspace{.5cm} \left(E[y_{it} | i = C, t = 1] - E[y_{it} | i = C t = 0] \right) = \delta
+    \end{align*}$$`
+    
+---
+# .center.pull[TWFE DiD]
+
+- Regression DiD provides both estimates of `\(\color{maroon}{\delta}\)` and standard errors for the estimates.
+
+- **Angrist &amp; Pischke (2008)**:
+  - "It's also easy to add additional (units) or periods to the regression setup... [and] it's easy to add additional covariates."
+
+- &lt;span style="color:maroon"&gt; Two-way fixed effects estimator &lt;span&gt;:
+`$$y_{it} = \alpha_i + \alpha_t + \color{maroon}{\delta^{DD}} D_{it} + \epsilon_{it}$$`
+
+  - `\(\alpha_i\)` and `\(\alpha_t\)` are unit and time fixed effects, `\(D_{it}\)` is the unit-time indicator for treatment.
+  
+  - `\(TREAT_i\)` and `\(POST_t\)` now subsumed by the fixed effects.
+  
+  - Can be easily modified to include covariate matrix `\(X_{it}\)`, time trends, dynamic treatment effects estimation, etc. 
+
+---
+# .center.pull[Where TWFE Goes Wrong]
+
+- Recent development in econometrics on the issues with TWFE DiD with "staggered treatment timing" (**de Chaisemartin and D’Haultfœuille (2020), Callaway and Sant’Anna (2021), Goodman-Bacon (2021), Sun and Abraham (2021)**)
+
+  - Different units receive treatment at different periods in time.
+  
+- Staggered DiD is commonly used. It helps to increase the amount of cross-sectional variation if done correctly. 
+
+- What really happened behind the scenes: 
+  
+  - &lt;span style="color:maroon"&gt; `\(\color{maroon}{\delta^{DD}}\)` with staggered treatment timing is a weighted average of many different treatment effects &lt;span&gt;. 
+  
+  - The weights are sometimes negative and non-intuitive.
+  
+  - Before 2018, people knew little about how TWFE measures when treatment timing varies, how it compares means across groups, or why different specifications change estimates.
+  
+---
+# .center.pull[Bias with TWFE - Goodman-Bacon (2021)]
+
+- **Goodman-Bacon (2021)** provides a clear graphical intuition for the bias. Assume three treatment groups - never treated units (U), early treated units (k), and later treated units (l).
+
+&lt;img src="DID_files/figure-html/d3-1.png" width="504" style="display: block; margin: auto;" /&gt;
+
+---
+# .center.pull[Bias with TWFE - Goodman-Bacon (2021)]
+
+- **Goodman-Bacon (2021)** shows that we can form four different 2x2 groups in this setting, where the effect can be estimated using the simple regression DiD in each group:
+
+&lt;img src="DID_files/figure-html/d4-1.png" width="504" style="display: block; margin: auto;" /&gt;
+
+---
+# .center.pull[Bias with TWFE - Goodman-Bacon (2021)]
+
+- Some important Insights
+
+  - `\(\color{maroon}{\delta^{DD}}\)` is just the *weighted average* of the four 2x2 treatment effects. The weights are a function of the *size of the sub-sample, relative size of treatment and control units, and the timing of treatment in the sub-sample*.
+  
+  - Already-treated units act as controls even though they are treated.
+  
+  - Given the weighting function, panel length alone can change the DiD estimates substantially, even when each `\(\color{maroon}{\delta^{DD}}\)` does not change.
+  
+  - Groups treated closer to middle of panel receive higher weights than those treated earlier or later.
+  
+---
+# .center.pull[Simulation Exercise]
+
+- Can show how easily `\(\color{maroon}{\delta^{DD}}\)` goes wrong through a simulation exercise.
+
+- Consider two sets of DiD estimates - one where the treatment occurs in one period, and one where the treatment is staggered.
+
+- The data generating process (DGP) is linear: `\(y_{it} = \alpha_i + \alpha_t + \color{maroon}{\delta_{it}} + \epsilon_{it}\)`.
+  - `\(\alpha_i, \alpha_t \sim N(0, 1)\)`
+  - `\(\epsilon_{i, t} \sim N\left(0, \left(\frac{1}{2}\right)^2\right)\)`
+  
+- We will consider two different treatment assignment set ups for `\(\color{maroon}{\delta_{it}}\)`.
+
+---
+# .center.pull[Simulation 1 - 1 Period Treatment]
+
+- There are 20 states `\(s\)`, and 200 units `\(i\)` randomly drawn from the 20 states.
+
+- Data covers years 1990 to 2010, and half the states receive "treatment" in 2000. 
+
+- For every unit incorporated in a treated state, we pull a unit-specific treatment effect from `\(\mu_i \sim N(0.3, (1/5)^2)\)`.
+
+- Treatment effects here are trend breaks rather than unit shifts: the accumulated treatment effect `\(\color{maroon}{\delta_{it}}\)` is `\(\mu_i \times (year - 1995 + 1)\)` for years after 2000. 
+
+- We then estimate the average treatment effect as `\(\color{maroon}{\hat{\delta}}\)` from:
+
+`$$y_{it} = \hat{\alpha_i} + \hat{\alpha_t} + \color{maroon}{\hat{\delta}} D_{it}$$`
+
+- Simulate this data 500 times and plot the distribution of estimates `\(\color{maroon}{\hat{\delta}}\)` and the true effect (red line).
+
+---
+# .center.pull[Simulation 1 - 1 Period Treatment]
+
+&lt;img src="DID_files/figure-html/d5-1.png" width="720" style="display: block; margin: auto;" /&gt;
+
+---
+# .center.pull[Simulation 2 - Staggered Treatment]
+
+- Run similar analysis with staggered treatment. 
+
+- The 20 states are randomly assigned into four treatment cohorts of size 50 depending on year of treatment assignment (1994, 1998, 2002, and 2004)
+
+- DGP is identical, except that now `\(\color{maroon}{\delta_{it}}\)` is equal to `\(\mu_i \times (year - \tau_g + 1)\)` where `\(\tau_g\)` is the treatment assignment year. 
+
+- Again, we estimate this data 500 times and plot the distribution of estimates `\(\color{maroon}{\hat{\delta}}\)` and the true effect (red line).
+
+---
+# .center.pull[Simulation 2 - Staggered Treatment]
+
+&lt;img src="DID_files/figure-html/d6-1.png" width="720" style="display: block; margin: auto;" /&gt;
+
+---
+# .center.pull[Simulation 2 - Staggered Treatment]
+
+- &lt;span style="color:maroon"&gt;  Main problem - we use *early treated units* as controls for later treated units, which violates the *parallel trends assumption*! &lt;span&gt; 
+
+- When the treatment effect is "dynamic", i.e. takes more than one period to be incorporated into your dependent variable, you are *subtracting* the treatment effects from prior treated units from the estimate of future control units. 
+
+- This biases your estimates towards zero when all the treatment effects are the same. 
+
+---
+# .center.pull[Another Simulation]
+
+- Can we actually get estimates for `\(\color{maroon}{\delta}\)` that are of the *wrong sign*? Yes, if treatment effects for early treated units are larger (in absolute magnitude) than the treatment effects on later treated units. 
+
+- Let's simulate another example in which units are randomly assigned to one of 20 states. The 20 states are randomly assigned into one of 5 treatment groups `\(G_g\)` based on treatment being initiated in 1993, 1997, 2001, 2005, and 2009. 
+
+- All treated units incorporated in a state in treatment group `\(G_g\)` receive a treatment effect `\(\delta_i \sim N(\delta_g, .2^2)\)`.
+
+- The treatment effect is cumulative or dynamic - `\(\delta_{it} = \delta_i \times (year - G_g)\)`.
+
+---
+# .center.pull[Another Simulation]
+
+- The average treatment effect multiple decreases over time:
+
+`\(\hspace{2cm}\)`
+
+&lt;table style="width:30%; margin-left: auto; margin-right: auto;" class="table"&gt;
+&lt;caption&gt;&lt;center&gt;&lt;strong&gt;Treatment Effect Averages&lt;/strong&gt;&lt;/center&gt;&lt;/caption&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:center;"&gt; Cohort &lt;/th&gt;
+   &lt;th style="text-align:center;"&gt; Effect &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; 1993 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.5 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; 1997 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.4 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; 2001 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.3 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; 2005 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.2 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; 2009 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.1 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+# .center.pull[Another Simulation]
+
+- First let's look at the distribution of `\(\color{maroon}{\delta^{DD}}\)` using TWFE estimation with this simulated sample:
+
+&lt;img src="DID_files/figure-html/d8-1.png" width="720" style="display: block; margin: auto;" /&gt;
+
+---
+# .center.pull[Goodman-Bacon Decomposition]
+
+
+
+
+&lt;img src="DID_files/figure-html/d10-1.png" width="720" style="display: block; margin: auto;" /&gt;
+
+---
+# .center.pull[Callaway &amp; Sant'Anna]
+
+- Inverse propensity weighted (IPW) long-difference in cohort-specific average treatment effects between treated and untreated units for a given treatment cohort. 
+
+`$$\begin{equation} ATT(g, t) = \mathbb{E} \left[\left( \frac{G_g}{\mathbb{E}[G_g]} - \frac{\frac{p_g(X)C}{1 - p_g(X)}}{\mathbb{E}\left[\frac{p_g(X)C}{1 - p_g(X)} \right]} \right) \left(Y_t - T_{g - 1}\right)\right] \end{equation}$$`
+
+
+- Without covariates, as in the simulated example here, it calculates the simple long difference between all treated units `\(i\)` in relative year `\(k\)` with all potential control units that have not yet been treated by year `\(k\)`.
+
+---
+# .center.pull[Callaway &amp; Sant'Anna]
+
+&lt;img src="DID_files/figure-html/d11-1.png" width="720" style="display: block; margin: auto;" /&gt;
+
+---
+# .center.pull[Abraham and Sun]
+
+- A relatively straightforward extension of the standard event-study TWFE model:
+
+`$$y_{it} = \alpha_i + \alpha_t + \sum_e \sum_{l \neq -1} \delta_{el}(1\{E_i = e\} \cdot D_{it}^l) + \epsilon_{it}$$`
+
+- You saturate the relative time indicators (i.e. t = -2, -1, ...) with indicators for the treatment initiation year group, and aggregate to overall aggregate relative time indicators by cohort size.
+
+- In the case of no covariates, this gives you the same estimate as Callaway &amp; Sant'Anna if you *fully saturate* the model with time indicators (leaving only two relative year identifiers missing).
+
+- The authors don't claim that it can be used with covariates, but it seemingly follows if we think it is okay with normal TWFE DiD. 
+
+---
+# .center.pull[Abraham and Sun]
+&lt;img src="DID_files/figure-html/d12-1.png" width="720" style="display: block; margin: auto;" /&gt;
+
+---
+# .center.pull[Model Comparison]
+
+- **Callaway &amp; Sant'Anna**
+  
+  - Can be *very* flexible in determining which control units to consider, including never-treated and not-yet-treated. 
+  - Has a more flexible functional form as well (easier to adjust for pre-treatment covariates).
+  - *Doubly robust* estimation: combine propensity score and linear regression so that we will get unbiased estimate if either model specification is correct.
+
+- **Abraham &amp; Sun** 
+  
+  - Very similar to regular TWFE OLS and hence easy to explain. 
+  - Control units are all units not treated within the data sample. If most of your units are treated by the end (or all), this can make control units very non-representative and restricted.
+
+- Without covariates, **Callaway &amp; Sant'Anna** and **Abraham &amp; Sun** yield same results. 
+
+---
+# .center.pull[What Are The Best Practices?]
+
+- It is still safe to use TWFE DiD when:  
+  - there is only a **single treatment period**; 
+  - the treatment effects are **homogeneous**. 
+
+- When there are multiple time periods, we should consider to: 
+  - plot the **treatment timing across cohorts**; 
+  - decompose the TWFE estimator with **Bacon-decomposition**. 
+
+- When using event-study specification, we should **avoid binning relative-time periods** unless we have reasons to believe homogeneous effects apply in the relative-time periods within a bin.
+
+---
+
+# .center.pull[Plot Treatment Timing Across Cohort]
+&lt;center&gt;
+
+&lt;img src="Plot treatment timing across cohorts.png", height = "30%", width = "30%"&gt;
+
+---
+# .center.pull[What Are The Best Practices?]
+
+- If there is justifiable concern for bias, we should apply at least one of the **alternative estimators**.
+  - *Callaway &amp; Sant'Anna, Abraham and Sun, de Chaisemartin-D'Haultfoeuille, etc.*
+
+- When using the alternative estimators, we should justify their choice of **clean comparison groups** (not-yet treated, last treated, or never treated) and articulate why the parallel-trends assumption is likely to apply.
+
+- Regardless of the estimators used, static DiD estimates should be accompanied by **event-study estimates**. 
+
+- It is good practice to use more than one alternative estimators and compare their estimates. However, it is really uncessary to include all the available estimators...
+
+---
+
+# .center.pull[This Is Fine]
+&lt;center&gt;
+
+&lt;img src="https://raw.githubusercontent.com/borusyak/did_imputation/main/five_estimators_example.png", width = "60%"&gt;
+
+---
+
+# .center.pull[This Is Too Much]
+&lt;center&gt;
+
+&lt;img src="https://raw.githubusercontent.com/pietrosantoleri/staggered_did/main/output/seven_estimators_example_allt.png", width = "65%"&gt;
+
+
+---
+# .center.pull[Takeaways]
+
+- TWFE estimator is a power tool and we should still use it for DiD when appropriate.
+
+- However, we should make sure we understand what we're doing. DiD is a **comparison of means** and at a minimum we should know which means we're comparing. 
+
+- Multiple new methods have been proposed, all of which ensure that you **aren't using prior treated units as controls**. 
+
+- You should probably tailor your selection of method to your **data structure**: they use and discard different amount of control units and depending on your setting this might matter. 
+
+- You don't have to use all the new methods in your project! 
+
+---
+# .center.pull[References]
+
+1. Baker, Andrew C., David F. Larcker, and Charles C. Y. Wang. 2022. “How Much Should We Trust Staggered Difference-in-Differences Estimates?” Journal of Financial Economics 144 (2): 370–95. https://doi.org/10.1016/j.jfineco.2022.01.004.
+
+2. Borusyak, Kirill, Xavier Jaravel, and Jann Spiess. 2022. “Revisiting Event Study Designs: Robust and Efficient Estimation.” arXiv. https://doi.org/10.48550/arXiv.2108.12419.
+
+3. Callaway, Brantly, and Pedro H. C. Sant’Anna. 2021. “Difference-in-Differences with Multiple Time Periods.” Journal of Econometrics, Themed Issue: Treatment Effect 1, 225 (2): 200–230. https://doi.org/10.1016/j.jeconom.2020.12.001.
+
+4. Goodman-Bacon, Andrew. “Difference-in-Differences with Variation in Treatment Timing.” Journal of Econometrics, Themed Issue: Treatment Effect 1, 225, no. 2 (December 1, 2021): 254–77. https://doi.org/10.1016/j.jeconom.2021.03.014.
+
+5. Sun, Liyang. 2021. EVENTSTUDYINTERACT: Stata Module to Implement the Interaction Weighted Estimator for an Event Study. Statistical Software Components. https://econpapers.repec.org/software/bocbocode/S458978.htm.
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"extra_dependencies": "xcolor",
+"ratio": "16:9"
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
