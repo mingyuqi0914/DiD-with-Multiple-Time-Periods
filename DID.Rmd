@@ -965,7 +965,7 @@ AS_plot %>%
 # .center.pull[This Is Fine]
 <center>
 
-<img src="https://raw.githubusercontent.com/borusyak/did_imputation/main/five_estimators_example.png", width = "60%">
+<img src="https://raw.githubusercontent.com/borusyak/did_imputation/main/five_estimators_example.png", width = "62%">
 
 ---
 
