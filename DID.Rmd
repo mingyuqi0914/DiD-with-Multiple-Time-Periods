@@ -1467,7 +1467,7 @@ $\hspace{2cm}$
 
 - Multiple new methods have been proposed, all of which ensure that you <span style="color:maroon"> aren't using prior treated units as controls </span>. 
 
-- You should probably tailor your selection of method to your <span style="color:maroon"> data structure </span>: they use and discard different amount of control units and depending on your setting this might matter. 
+- You should probably tailor your selection of method to your <span style="color:maroon"> data structure </span>: they use and discard different amount of control units and depending on your setting this might matter.  
 
 ---
 # .center.pull[References]
