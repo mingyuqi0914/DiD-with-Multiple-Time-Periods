@@ -24,3 +24,5 @@ fastDummies
 magrittr
 did
 MCPanel
+data.table
+fixest

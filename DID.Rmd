@@ -33,6 +33,8 @@ library(multcomp)
 library(fastDummies)
 library(magrittr)
 library(MCPanel)
+library(data.table) 
+library(fixest)     
 select <- dplyr::select
 theme_set(theme_clean() + theme(plot.background = element_blank()))
 ```
@@ -54,20 +56,38 @@ $\hspace{2cm}$
 6. Conclusion and Recommendations
 
 ---
+# .center.pull[Outline of Lecture]
+
+$\hspace{2cm}$
+
+1. <span style="color:maroon"> Overview of Difference-in-Differences (DiD) </span>
+
+2. Two-Way Fixed Effects (TWFE) Estimator
+
+3. Problems with Using TWFE Estimator for DiD with Multiple Time Periods
+
+4. Simulation Examples
+
+5. Alternative Difference-in-Differences Estimators
+
+6. Conclusion and Recommendations
+
+---
 # .center.pull[Difference-in-Differences]
 
 $\hspace{2cm}$
 
-- Revisit **Card and Krueger (1993)** minimum wage and employment study comparing NJ and PA.
+Let us start with a classic difference-in-differences set-up 
 
-- 2 units and 2 time periods.
+  - There are 2 units (treated and control) and 2 time periods (0 and 1).
 
-- 1 treated unit (T), which receives treatment in the second period. 
+  - The treated unit (T) receives treatment in the second period. 
 
-- 1 control unit (C), which is never treated.  
+  - The control unit (C) is never treated;
+  
+  - We call this a <span style="color:maroon"> 2x2 DiD </span>.
 
 ---
-
 # .center.pull[Difference-in-Differences]
 
 ```{r d1, message = FALSE, warning = FALSE, echo = FALSE, fig.align = 'center', fig.width = 10, cache = TRUE}
@@ -94,39 +114,87 @@ data %>%
 
 
 ---
-
 # .center.pull[Difference-in-Differences]
 
-- Building upon **Angrist & Pischke (2008, p. 228)** we can think of the simple 2x2 DiD as a fixed effects estimator.
-
-- Potential Outcomes 
-  - $Y_{i, t}^0$ = value of dependent variable for unit $i$ in period $t$ without treatment.
-  - $Y_{i, t}^1$ = value of dependent variable for unit $i$ in period $t$ with treatment.
+```{r d2, message = FALSE, warning = FALSE, echo = FALSE, fig.align = 'center', fig.width = 10, cache = TRUE}
+data$Y_0 = c(2,3,NA,NA)
   
-- The expected outcome is a *linear function* of unit and time fixed effects:
-$$E[{Y_{i, t}^0}] =\alpha_i + \alpha_t$$
-$$E[{Y_{i, t}^1}] =\alpha_i + \alpha_t + \color{maroon}{\delta} D_{st}$$
-- The goal of DiD is to get an *unbiased estimate* of the treatment effect $\color{maroon}{\delta}$.
-
+# plot
+data %>% 
+  ggplot(aes(x = T, y = Y, group = Unit, color = Unit)) + geom_line(size = 2) + 
+  geom_line(aes(x = T, y = Y_0, color = Unit), linetype = "dashed", size = 2) +
+  labs(x = "Time", y = "Outcome") + 
+  scale_x_continuous(breaks = c(0, 1)) + 
+  scale_y_continuous(limits=c(0,5)) +
+  scale_colour_brewer(palette = 'Set1') + 
+  theme(axis.title = element_text(size = 18),
+        axis.text = element_text(size = 16),
+        legend.position = 'bottom',
+        legend.title = element_blank(),
+        legend.text = element_text(size = 16),
+        plot.background = element_blank())+
+  annotate("label", y = 4, x = 0.85, label = "Treatment \n Effect") + 
+  annotate("segment", x = 1, xend = 1, y = 3, yend = 5, color = "black", size = 1) + 
+  annotate("segment", x = 0.92, xend = 1, y = 4, yend = 5, color = "black", 
+           linetype = "dashed", size = 2) + 
+  annotate("segment", x = 0.92, xend = 1, y = 4, yend = 3, color = "black", 
+           linetype = "dashed", size = 2)
+```
 
 ---
-# .center.pull[Difference-in-Differences]
+# .center.pull[Outline of Lecture]
 
-- Difference in expectations for the *control* unit between times t = 1 and t = 0:
-$$\begin{align*} E[Y_{C, 1}^0] & = \alpha_1 + \alpha_C \\ E[Y_{C, 0}^0] & = \alpha_0 + \alpha_C  \\ E[Y_{C, 1}^0] - E[Y_{C, 0}^0] & = \alpha_1 - \alpha_0 \end{align*}$$
- 
-- Now do the same thing for the *treated* unit:
-   $$\begin{align*} E[Y_{T, 1}^1] & = \alpha_1 + \alpha_T + \color{maroon}{\delta} \\ E[Y_{T, 0}^1] & = \alpha_0 + \alpha_T  \\ E[Y_{T, 1}^1] - E[Y_{T, 0}^1] & = \alpha_1 - \alpha_0 + \color{maroon}{\delta} \end{align*}$$
+$\hspace{2cm}$
+
+1. <span style="color:maroon"> Overview of Difference-in-Differences (DiD) </span>
+
+2. <span style="color:maroon"> Two-Way Fixed Effects (TWFE) Estimator </span>
+
+3. Problems with Using TWFE Estimator for DiD with Multiple Time Periods
+
+4. Simulation Examples
+
+5. Alternative Difference-in-Differences Estimators
+
+6. Conclusion and Recommendations
+
+---
+# .center.pull[Two-Way Fixed Effects (TWFE) DiD]
+
+- Building upon <span style="color:maroon"> Angrist & Pischke (2008, p. 228) </span>, we can think of the simple 2x2 DiD as a <span style="color:maroon"> fixed effects estimator </span>.
+
+- Potential Outcomes 
+  - $E[Y_{i,t}|D=0]$ = value of outcome for unit $i$ in period $t$ for the <span style="color:maroon"> control </span>.
+  - $E[Y_{i,t}|D=1]$ = value of outcome for unit $i$ in period $t$ for the <span style="color:maroon"> treated </span>.
+  
+- The expected outcome is a *linear function* of unit and time fixed effects
+$$E[Y_{i,t}|D=0] =\alpha_i + \alpha_t$$
+$$E[Y_{i,t}|D=1] =\alpha_i + \alpha_t + \color{maroon}{\delta} D_{it}$$
+
+- The goal of DiD is to get an *unbiased estimate* of the treatment effect $\color{maroon}{\delta}$.
+
+---
+# .center.pull[Two-Way Differencing]
+
+- Difference in expectations for the <span style="color:maroon"> control (C) </span> unit 
+  - $E[Y_{i,t}|i = C, t = 0] = \alpha_C + \alpha_0$
+  - $E[Y_{i,t}|i = C, t = 1] = \alpha_C + \alpha_1$
+  - Difference between time 1 and time 0: $\alpha_1 - \alpha_0$
+
+- Difference in expectations for the <span style="color:maroon"> treated (T) </span> unit 
+  - $E[Y_{i,t}|i = T, t = 0] = \alpha_T + \alpha_0$
+  - $E[Y_{i,t}|i = T, t = 1] = \alpha_T + \alpha_1 + \color{maroon}{\delta}$
+  - Difference between time 1 and time 0: $\alpha_1 - \alpha_0 + \color{maroon}{\delta}$
+
 - If we assume the linear structure of DiD, then unbiased estimate of $\color{maroon}{\delta}$ is:
 
 $$\color{maroon}{\delta} =
-    \begin{align*} & \left( E[Y_{T, 1}^1] - E[Y_{T, 0}^1] \right) - \left( E[Y_{C, 1}^0] - E[Y_{C, 0}^0] \right) \end{align*}$$
+    \begin{align*} & \left( E[Y_{i,t}|i = T, t = 1] - E[Y_{i,t}|i = T, t = 0] \right) - \left( E[Y_{i,t}|i = C, t = 1] - E[Y_{i,t}|i = C, t = 0] \right) \end{align*}$$
 
 ---
-
 # .center.pull[Two-Way Differencing]
 
-```{r d2, echo = FALSE, fig.align = 'center', fig.width = 10, cache = TRUE}
+```{r d3, echo = FALSE, fig.align = 'center', fig.width = 10, cache = TRUE}
 data %>% 
   group_by(Unit) %>% 
   mutate(Y2 = Y - Y[which(T == 0)]) %>% 
@@ -151,14 +219,14 @@ data %>%
 ```
 
 ---
-
 # .center.pull[Regression DiD]
 
-The DiD can be estimated through linear regression of the form:
+Recall that DiD can be estimated through linear regression of the form:
 
 $$\tag{1} y_{it} = \alpha + \beta_1 TREAT_i + \beta_2 POST_t + \color{maroon}{\delta} (TREAT_i \cdot POST_t) + \epsilon_{it}$$
 
-The coefficients from the regression estimate in (1) recover the same parameters as the two-way differencing performed above:
+The coefficients from the regression estimate in (1) recover the same parameters as the two-way differencing we performed earlier:
+
 $$\begin{align*} 
     \alpha &= E[y_{it} | i = C, t = 0] = \alpha_0 + \alpha_C \\
     \\
@@ -169,7 +237,7 @@ $$\begin{align*}
     &= (\alpha_1 + \alpha_C) - (\alpha_0 + \alpha_C) = \alpha_1 - \alpha_0 \\
     \\
     \color{maroon}{\delta} &= \left(E[y_{it} | i = T, t = 1] - E[y_{it} | i = T, t = 0] \right) - \\
-    &\hspace{.5cm} \left(E[y_{it} | i = C, t = 1] - E[y_{it} | i = C t = 0] \right) = \delta
+    &\hspace{.5cm} \left(E[y_{it} | i = C, t = 1] - E[y_{it} | i = C t = 0] \right)
     \end{align*}$$
     
 ---
@@ -177,41 +245,94 @@ $$\begin{align*}
 
 - Regression DiD provides both estimates of $\color{maroon}{\delta}$ and standard errors for the estimates.
 
-- **Angrist & Pischke (2008)**:
+- <span style="color:maroon"> Angrist & Pischke (2008) </span>:
   - "It's also easy to add additional (units) or periods to the regression setup... [and] it's easy to add additional covariates."
 
 - <span style="color:maroon"> Two-way fixed effects estimator <span>:
-$$y_{it} = \alpha_i + \alpha_t + \color{maroon}{\delta^{DD}} D_{it} + \epsilon_{it}$$
+$$y_{it} = \alpha_i + \alpha_t + \color{maroon}{\delta} D_{it} + \epsilon_{it}$$
 
   - $\alpha_i$ and $\alpha_t$ are unit and time fixed effects, $D_{it}$ is the unit-time indicator for treatment.
   
-  - $TREAT_i$ and $POST_t$ now subsumed by the fixed effects.
+  - $TREAT_i$ and $POST_t$ now subsumed by the unit fixed effects $\alpha_i$ and time fixed effects $\alpha_t$, respectively.
   
-  - Can be easily modified to include covariate matrix $X_{it}$, time trends, dynamic treatment effects estimation, etc. 
+  - TWFE estimator be easily modified to include covariate matrix $X_{it}$, time trends, dynamic treatment effects estimation, etc. 
+  
+---
+# .center.pull[TWFE DiD]
+
+- Recall the beer tax example we used in the lecture on panel data analysis, where each unit is a state, each time period is a year, the treatment is beer tax rate, and the outcome is traffic fatalities. If we treat beer tax as a binary indicator (e.g., whether there is a increase in beer tax), it will be as same as the example we just went over. 
+
+- TWFE DiD allows us to control for variables that change cross states but are constant over time and variables that change over time but are constant across states. 
+
+- However, <span style="color:maroon"> contemporaneous trends </span> could confound the treatment effect of interest. For instance, coincident changes in DUI punishment may confound the estimated effect of beer tax on traffic fatalities. 
+
+- Researchers often use <span style="color:maroon"> staggered DiD, which means different units receive treatment at different periods in time, </span> to address this concern. In the beer tax example, it means that states increase their beer tax in different years. 
+
+- TWFE DiD with staggered treatment timing is commonly used. Researchers sometimes use an event study version of TWFE to estimate dynamic treatment effects. 
+
+---
+# .center.pull[Event Study TWFE]
+
+```{r d4, echo = FALSE, warning = FALSE, message = FALSE, fig.align = 'center', fig.width = 10, cache = TRUE}
+# Load and prepare data
+dat = fread("https://raw.githubusercontent.com/LOST-STATS/LOST-STATS.github.io/master/Model_Estimation/Data/Event_Study_DiD/bacon_example.csv") 
+
+# Let's create a more user-friendly indicator of which states received treatment
+dat[, treat := ifelse(is.na(`_nfd`), 0, 1)]
+dat[, time_to_treat := ifelse(treat==1, year - `_nfd`, 0)]
+
+mod_twfe = feols(asmrs ~ i(time_to_treat, treat, ref = -1) + ## Our key interaction: time × treatment status
+		  pcinc + asmrh + cases |                    ## Other controls
+		  stfips + year,                             ## FEs
+		 cluster = ~stfips,                          ## Clustered SEs
+		 data = dat)
+
+iplot(mod_twfe, 
+      xlab = 'Time to treatment',
+      main = 'Dynamic Treatment Effect', 
+      xlim = c(-10,10), ylim = c(-30, 30))
+axis(1, at = seq(-10, 10, by = 1))
+axis(2, at = seq(-30, 30, by = 5))
+```
+
+---
+# .center.pull[Outline of Lecture]
+
+$\hspace{2cm}$
+
+1. <span style="color:maroon"> Overview of Difference-in-Differences (DiD) </span>
+
+2. <span style="color:maroon"> Two-Way Fixed Effects (TWFE) Estimator </span>
+
+3. <span style="color:maroon"> Problems with Using TWFE Estimator for DiD with Multiple Time Periods </span>
+
+4. Simulation Examples
+
+5. Alternative Difference-in-Differences Estimators
+
+6. Conclusion and Recommendations
 
 ---
 # .center.pull[Where TWFE Goes Wrong]
 
-- Recent development in econometrics on the issues with TWFE DiD with "staggered treatment timing" (**de Chaisemartin and D’Haultfœuille (2020), Callaway and Sant’Anna (2021), Goodman-Bacon (2021), Sun and Abraham (2021)**)
+- Before 2018, people knew little about how TWFE DiD measures when treatment timing varies, how it compares means across groups, or why different specifications change estimates.
 
-  - Different units receive treatment at different periods in time.
-  
-- Staggered DiD is commonly used. It helps to increase the amount of cross-sectional variation if done correctly. 
+- Recent development in econometrics on the issues with TWFE DiD with staggered treatment timing (<span style="color:maroon"> de Chaisemartin and D’Haultfœuille (2020), Callaway and Sant’Anna (2021), Goodman-Bacon (2021), Sun and Abraham (2021), Borusyak et al. (2022) </span>)
 
-- What really happened behind the scenes: 
+  - TWFE DiD with staggered treatment timing is a <span style="color:maroon"> weighted average of many different 2x2 DiD treatment effects </span>. 
   
-  - <span style="color:maroon"> $\color{maroon}{\delta^{DD}}$ with staggered treatment timing is a weighted average of many different treatment effects <span>. 
+  - In case of staggered treatment timing and treatment effect heterogeneity, the TWFE DiD estimates are likely biased.
+    
+  - The weights are sometimes <span style="color:maroon"> negative </span>, which is due to the issue that <span style="color:maroon"> already-treated units acting as effective comparison units for not-yet-treated units (bad comparisons) </span>.
   
-  - The weights are sometimes negative and non-intuitive.
-  
-  - Before 2018, people knew little about how TWFE measures when treatment timing varies, how it compares means across groups, or why different specifications change estimates.
+  - Dynamic effect estimates from event study TWFE estimator cannot help to address the problem above. 
   
 ---
 # .center.pull[Bias with TWFE - Goodman-Bacon (2021)]
 
-- **Goodman-Bacon (2021)** provides a clear graphical intuition for the bias. Assume three treatment groups - never treated units (U), early treated units (k), and later treated units (l).
+- **Goodman-Bacon (2021)** provides a clear graphical intuition for the bias. We assume three treatment groups - never treated units (U), early treated units (k), and later treated units (l).
 
-```{r d3, echo = FALSE, warning = FALSE, fig.align = 'center', fig.height = 6, cache = TRUE}
+```{r d5, echo = FALSE, warning = FALSE, fig.align = 'center', fig.height = 6, cache = TRUE}
 data <- tibble(
   time = 0:100,
   U = seq(5, 12, length.out = 101),
@@ -260,7 +381,7 @@ data %>%
 
 - **Goodman-Bacon (2021)** shows that we can form four different 2x2 groups in this setting, where the effect can be estimated using the simple regression DiD in each group:
 
-```{r d4, echo = FALSE, warning = FALSE, fig.align = 'center', fig.height = 6, cache = TRUE}
+```{r d6, echo = FALSE, warning = FALSE, fig.align = 'center', fig.height = 6, cache = TRUE}
 # function to make subplots
 make_subplot <- function(omit, keep_dates, colors, breaks, break_expressions, series, 
                          series_x, series_y, break_names, break_loc, arrow_start, arrow_stop, title){
@@ -329,26 +450,60 @@ p1 + p2 + p3 + p4 + plot_layout(nrow = 2)
 ---
 # .center.pull[Bias with TWFE - Goodman-Bacon (2021)]
 
-- Some important Insights
+- $\color{maroon}{\delta}$ is the weighted average of the four 2x2 treatment effects. The weights are a function of the <span style="color:maroon"> size of the sub-sample, relative size of treatment and control groups, and treatment variance in the sub-sample </span>.
 
-  - $\color{maroon}{\delta^{DD}}$ is just the *weighted average* of the four 2x2 treatment effects. The weights are a function of the *size of the sub-sample, relative size of treatment and control units, and the timing of treatment in the sub-sample*.
+  - Size $N_k$ is calculated as the share of the full sample. 
   
-  - Already-treated units act as controls even though they are treated.
+  - For a treatment group that receives treatment at time t, the treatment variance is calculated as $\frac{t}{T}\times(1-\frac{t}{T})$. 
   
-  - Given the weighting function, panel length alone can change the DiD estimates substantially, even when each $\color{maroon}{\delta^{DD}}$ does not change.
-  
-  - Groups treated closer to middle of panel receive higher weights than those treated earlier or later.
-  
+- The weights are larger when the size of the sub-sample is larger, treatment and control groups are closer in size, or treatment variance in the sub-sample is larger. 
+
+- All else equal, groups treated closer to middle of panel receive higher weights than those treated earlier or later. This is because such groups have larger treatment variance in the sub-sample. 
+
+- Since the weights are not equal to the sample shares, $\color{maroon}{\delta}$ will not equal the sample $ATT$. 
+
 ---
-# .center.pull[Simulation Exercise]
+# .center.pull[Bias with TWFE - Goodman-Bacon (2021)]
 
-- Can show how easily $\color{maroon}{\delta^{DD}}$ goes wrong through a simulation exercise.
+- The paper further shows that <span style="color:maroon"> $\color{maroon}{\delta} = VWATT + VWCT - \Delta ATT$ </span>
+
+  - $VWATT$: variance-weighted average treatment effect on the treated. 
+  
+  - $VWCT$: variance-weighted common trend.
+  
+  - $\Delta ATT$: weighted sum of the change in $ATT$ within a treatment-timing group's post-period and around a later-treated unit's treatment window. TWFE DiD uses already-treated units as effective control for later-treated groups. In case of heterogeneous treatment effect, changes in already-treated groups' outcome values will be contaminated by changes in treatment effects over time. 
+
+- Two sources of potential bias 
+
+  - Treatment effects vary across units: <span style="color:maroon"> the treatment effects of units treated towards the middle of the time window significantly differ from other treatment effects </span>, the TWFE DiD is likely biased.  
+  
+  - Treatment effects vary across time: <span style="color:maroon"> treatment effect is time-varying within a treated unit, which lead to $\Delta ATT > 0$. </span> In this case, TWFE DiD will yield estimates that are too small or even wrong-signed.  
+
+---
+# .center.pull[Outline of Lecture]
+
+$\hspace{2cm}$
+
+1. <span style="color:maroon"> Overview of Difference-in-Differences (DiD) </span>
+
+2. <span style="color:maroon"> Two-Way Fixed Effects (TWFE) Estimator </span>
+
+3. <span style="color:maroon"> Problems with Using TWFE Estimator for DiD with Multiple Time Periods </span>
+
+4. <span style="color:maroon"> Simulation Examples </span>
+
+5. Alternative Difference-in-Differences Estimators
+
+6. Conclusion and Recommendations
+
+---
+# .center.pull[Simulation Example]
 
 - Consider two sets of DiD estimates - one where the treatment occurs in one period, and one where the treatment is staggered.
 
 - The data generating process (DGP) is linear: $y_{it} = \alpha_i + \alpha_t + \color{maroon}{\delta_{it}} + \epsilon_{it}$.
-  - $\alpha_i, \alpha_t \sim N(0, 1)$
-  - $\epsilon_{i, t} \sim N\left(0, \left(\frac{1}{2}\right)^2\right)$
+  - $\alpha_i, \alpha_t \sim N(0, (0.5)^2)$
+  - $\epsilon_{i, t} \sim N\left(0, (0.1)^2\right)$
   
 - We will consider two different treatment assignment set ups for $\color{maroon}{\delta_{it}}$.
 
@@ -359,9 +514,9 @@ p1 + p2 + p3 + p4 + plot_layout(nrow = 2)
 
 - Data covers years 1990 to 2010, and half the states receive "treatment" in 2000. 
 
-- For every unit incorporated in a treated state, we pull a unit-specific treatment effect from $\mu_i \sim N(0.3, (1/5)^2)$.
+- For every unit incorporated in a treated state, we pull a unit-specific treatment effect from $\mu_i \sim N(0.3, (0.1)^2)$.
 
-- Treatment effects here are trend breaks rather than unit shifts: the accumulated treatment effect $\color{maroon}{\delta_{it}}$ is $\mu_i \times (year - 1995 + 1)$ for years after 2000. 
+- Treatment effects here are trend breaks rather than unit shifts: the accumulated treatment effect $\color{maroon}{\delta_{it}}$ is $\mu_i \times (year - 2000 + 1)$ for years after 2000. 
 
 - We then estimate the average treatment effect as $\color{maroon}{\hat{\delta}}$ from:
 
@@ -369,10 +524,87 @@ $$y_{it} = \hat{\alpha_i} + \hat{\alpha_t} + \color{maroon}{\hat{\delta}} D_{it}
 
 - Simulate this data 500 times and plot the distribution of estimates $\color{maroon}{\hat{\delta}}$ and the true effect (red line).
 
+- True effect is a simple average of treatment effects across all years:
+$$ \frac{(0.3 + 0.6 + ... + 3.3)}{11} = 1.8 $$
+
 ---
 # .center.pull[Simulation 1 - 1 Period Treatment]
 
-```{r d5, echo = FALSE, warning = FALSE, message = FALSE, fig.align = 'center', cache = TRUE, fig.width = 10}
+```{r d7, echo = FALSE, warning = FALSE, message = FALSE, fig.align = 'center', cache = TRUE, fig.width = 10}
+# Make Data  ---------------------------------------------
+set.seed(19910914)
+
+# Fixed Effects ------------------------------------------------
+# unit fixed effects
+unit <- tibble(
+  unit = 1:200, 
+  unit_fe = rnorm(200, 0, 0.5),
+  # generate state
+  state = sample(1:20, 200, replace = TRUE),
+  # generate treatment effect
+  mu = rnorm(200, 0.3, 0.1))
+
+# year fixed effects 
+year <- tibble(
+  year = 1990:2010,
+  year_fe = rnorm(21, 0, 0.5))
+
+# Trend Break -------------------------------------------------------------
+# Put the states into treatment groups
+treat_taus <- tibble(
+  # sample the states randomly
+  state = sample(1:20, 20, replace = FALSE),
+  # place the randomly sampled states into treatment and control states
+  treated_unit = sample(c(rep(1, 10), rep(0, 10)), 20, replace = FALSE))
+
+# make main dataset
+# full interaction of unit X year 
+data <- expand_grid(unit = 1:200, year = 1990:2010) %>% 
+  left_join(., unit) %>% 
+  left_join(., year) %>% 
+  left_join(., treat_taus) %>% 
+  # make error term and get treatment indicators and treatment effects
+  mutate(error = rnorm(4200, 0, 0.1),
+         treat = ifelse(year >= 2000 & treated_unit == 1, 1, 0),
+         tau = ifelse(treat == 1, mu, 0)) %>% 
+  # calculate cumulative treatment effects
+  group_by(unit) %>% 
+  mutate(tau_cum = cumsum(tau)) %>% 
+  ungroup() %>% 
+  # calculate the dep variable
+  mutate(dep_var = unit_fe + year_fe + tau_cum + error)
+
+sim1_plot <- data %>% 
+  ggplot(aes(x = year, y = dep_var, group = unit)) +
+  # unit specific lines
+  geom_line(alpha = 1/10, color = "grey") + 
+  # group specific averages
+  geom_line(
+    data = . %>% 
+      group_by(treated_unit, year) %>% 
+      dplyr::summarize(dep_var = mean(dep_var)),
+    aes(x = year, y = dep_var, group = factor(treated_unit),
+        color = factor(treated_unit)), size = 1) + 
+  scale_y_continuous(limits = c(-10, 10)) + 
+  labs(x = "", y = "", color = "Group") + 
+  ggtitle("Trends in Outcome Path") +
+  geom_vline(xintercept = 1999.5, color = '#4B5F6C',
+             linetype = "dashed", size = 1) + 
+  scale_color_manual(values = c("#A7473A", "#4B5F6C")) + 
+  theme(legend.position = 'bottom',
+        legend.title = element_blank(),
+        plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5),
+        axis.title.y = element_text(hjust = 0.5, vjust = 0.5, angle = 360)) +
+        scale_color_manual(values = c("#A7473A", "#4B5F6C"), label = c("Control", "Treated")) 
+
+sim1_plot
+```
+
+---
+# .center.pull[Simulation 1 - 1 Period Treatment]
+
+```{r d8, echo = FALSE, warning = FALSE, message = FALSE, fig.align = 'center', cache = TRUE, fig.width = 10}
 # Make Data  ---------------------------------------------
 # loop function for one-time DiD shock
 DID_onetime <- function(...) {
@@ -381,16 +613,16 @@ DID_onetime <- function(...) {
   # unit fixed effects
   unit <- tibble(
     unit = 1:200, 
-    unit_fe = rnorm(200, 0, 1),
+    unit_fe = rnorm(200, 0, 0.5),
     # generate state
     state = sample(1:20, 200, replace = TRUE),
     # generate treatment effect
-    mu = rnorm(200, 0.3, 0.2))
+    mu = rnorm(200, 0.3, 0.1))
   
   # year fixed effects 
   year <- tibble(
     year = 1990:2010,
-    year_fe = rnorm(21, 0, 1))
+    year_fe = rnorm(21, 0, 0.5))
   
   # Trend Break -------------------------------------------------------------
   # Put the states into treatment groups
@@ -407,7 +639,7 @@ DID_onetime <- function(...) {
     left_join(., year) %>% 
     left_join(., treat_taus) %>% 
     # make error term and get treatment indicators and treatment effects
-    mutate(error = rnorm(4200, 0, 0.5),
+    mutate(error = rnorm(4200, 0, 0.1),
            treat = ifelse(year >= 2000 & treated_unit == 1, 1, 0),
            tau = ifelse(treat == 1, mu, 0)) %>% 
     # calculate cumulative treatment effects
@@ -417,9 +649,9 @@ DID_onetime <- function(...) {
     # calculate the dep variable
     mutate(dep_var = unit_fe + year_fe + tau_cum + error)
   
-  # run the DID and get the treatment effect estimates
-  broom::tidy(felm(dep_var ~ treat | unit + year | 0 | state, data = data,
-                   exactDOF = TRUE, cmethod = "reghdfe"))
+    # run the DID and get the treatment effect estimates
+    broom::tidy(felm(dep_var ~ treat | unit + year | 0 | state, data = data,
+                     exactDOF = TRUE, cmethod = "reghdfe"))
 }
 # estimate 500 times 
 # set seed
@@ -431,7 +663,6 @@ DID_one_data %>%
   geom_vline(xintercept = (0.3 + 0.3*(2010-2000+1))*11/2/11, color = "red", size = 2) + 
   labs(x = "Estimate Size", y = "Density") + 
   theme(axis.title = element_text(size = 14))
-  
 ```
 
 ---
@@ -439,7 +670,7 @@ DID_one_data %>%
 
 - Run similar analysis with staggered treatment. 
 
-- The 20 states are randomly assigned into four treatment cohorts of size 50 depending on year of treatment assignment (1994, 1998, 2002, and 2004)
+- The 20 states are randomly assigned into four treatment cohorts (1994, 1998, 2002, and 2004) of size 50.
 
 - DGP is identical, except that now $\color{maroon}{\delta_{it}}$ is equal to $\mu_i \times (year - \tau_g + 1)$ where $\tau_g$ is the treatment assignment year. 
 
@@ -448,7 +679,86 @@ DID_one_data %>%
 ---
 # .center.pull[Simulation 2 - Staggered Treatment]
 
-```{r d6, echo = FALSE, warning = FALSE, message = FALSE, fig.align = 'center', cache = TRUE, fig.width = 10}
+```{r d9, echo = FALSE, warning = FALSE, message = FALSE, fig.align = 'center', cache = TRUE, fig.width = 10}
+# Make Data  ---------------------------------------------
+set.seed(19910914)
+
+# Fixed Effects ------------------------------------------------
+# unit fixed effects
+unit <- tibble(
+  unit = 1:200, 
+  unit_fe = rnorm(200, 0, 0.5),
+  # generate state
+  state = sample(1:20, 200, replace = TRUE),
+  # generate treatment effect
+  mu = rnorm(200, 0.3, 0.1))
+
+# year fixed effects 
+year <- tibble(
+  year = 1990:2010,
+  year_fe = rnorm(21, 0, 0.5))
+
+# Trend Break -------------------------------------------------------------
+# Put the states into treatment groups
+treat_taus <- tibble(
+  # sample the states randomly
+  state = sample(1:20, 20, replace = FALSE),
+  # place the randomly sampled states into five treatment groups G_g
+  cohort_year = sort(rep(c(1994, 1998, 2002, 2006), 5)))
+
+# make main dataset
+# full interaction of unit X year 
+data <- expand_grid(unit = 1:200, year = 1990:2010) %>% 
+  left_join(., unit) %>% 
+  left_join(., year) %>% 
+  left_join(., treat_taus) %>% 
+  # make error term and get treatment indicators and treatment effects
+  mutate(error = rnorm(4200, 0, 0.1),
+         treat = ifelse(year >= cohort_year, 1, 0),
+         tau = ifelse(treat == 1, mu, 0)) %>% 
+  # calculate cumulative treatment effects
+  group_by(unit) %>% 
+  mutate(tau_cum = cumsum(tau)) %>% 
+  ungroup() %>% 
+  # calculate the dep variable
+  mutate(dep_var = unit_fe + year_fe + tau_cum + error)
+
+sim2_plot <- data %>% 
+ggplot(aes(x = year, y = dep_var, group = unit)) +
+# unit specific lines
+geom_line(alpha = 1/10, color = "grey") + 
+# group specific averages
+geom_line(
+  data = . %>% 
+    group_by(cohort_year, year) %>% 
+    dplyr::summarize(dep_var = mean(dep_var)),
+  aes(x = year, y = dep_var, group = factor(cohort_year),
+      color = factor(cohort_year)), size = 1) + 
+labs(x = "", y = "", color = "Group") + 
+ggtitle("Trends in Outcome Path") +
+geom_vline(xintercept = 1993.5, color = '#A7473A',
+           linetype = "dashed", size = 1) + 
+geom_vline(xintercept = 1997.5, color = '#4B5F6C',
+           linetype = "dashed", size = 1) + 
+geom_vline(xintercept = 2001.5, color = '#51806a',
+           linetype = "dashed", size = 1) + 
+geom_vline(xintercept = 2005.5, color = 'darkorange',
+           linetype = "dashed", size = 1) + 
+scale_color_manual(values = c("#A7473A", "#4B5F6C", "#51806a", "darkorange")) + 
+scale_y_continuous(limits = c(-10, 10)) + 
+theme(legend.position = 'bottom',
+      legend.title = element_blank(),
+      plot.title = element_text(hjust = 0.5),
+      plot.subtitle = element_text(hjust = 0.5),
+      axis.title.y = element_text(hjust = 0.5, vjust = 0.5, angle = 360))
+
+sim2_plot
+```
+
+---
+# .center.pull[Simulation 2 - Staggered Treatment]
+
+```{r d10, echo = FALSE, warning = FALSE, message = FALSE, fig.align = 'center', cache = TRUE, fig.width = 10}
 ## estimate DID model 2 - 50 firms are treated every period, with the treatment effect still = 0.3 on average
 # loop function for one-time DiD shock
 DID_multiple <- function(...) {
@@ -457,16 +767,16 @@ DID_multiple <- function(...) {
   # unit fixed effects
   unit <- tibble(
     unit = 1:200, 
-    unit_fe = rnorm(200, 0, 1),
+    unit_fe = rnorm(200, 0, 0.5),
     # generate state
     state = sample(1:20, 200, replace = TRUE),
     # generate treatment effect
-    mu = rnorm(200, 0.3, 0.2))
+    mu = rnorm(200, 0.3, 0.1))
   
   # year fixed effects 
   year <- tibble(
     year = 1990:2010,
-    year_fe = rnorm(21, 0, 1))
+    year_fe = rnorm(21, 0, 0.5))
   
   # Trend Break -------------------------------------------------------------
   # Put the states into treatment groups
@@ -474,7 +784,7 @@ DID_multiple <- function(...) {
     # sample the states randomly
     state = sample(1:20, 20, replace = FALSE),
     # place the randomly sampled states into five treatment groups G_g
-    cohort_year = sort(rep(c(1996, 1998, 2002, 2004), 5)))
+    cohort_year = sort(rep(c(1994, 1998, 2002, 2006), 5)))
   
   # make main dataset
   # full interaction of unit X year 
@@ -483,7 +793,7 @@ DID_multiple <- function(...) {
     left_join(., year) %>% 
     left_join(., treat_taus) %>% 
     # make error term and get treatment indicators and treatment effects
-    mutate(error = rnorm(4200, 0, 0.5),
+    mutate(error = rnorm(4200, 0, 0.1),
            treat = ifelse(year >= cohort_year, 1, 0),
            tau = ifelse(treat == 1, mu, 0)) %>% 
     # calculate cumulative treatment effects
@@ -493,9 +803,9 @@ DID_multiple <- function(...) {
     # calculate the dep variable
     mutate(dep_var = unit_fe + year_fe + tau_cum + error)
   
-  # run the DID and get the treatment effect estimates
-  broom::tidy(felm(dep_var ~ treat | unit + year | 0 | state, data = data,
-                   exactDOF = TRUE, cmethod = "reghdfe"))
+    # run the DID and get the treatment effect estimates
+    broom::tidy(felm(dep_var ~ treat | unit + year | 0 | state, data = data,
+                     exactDOF = TRUE, cmethod = "reghdfe"))
 }
 # set seed
 set.seed(19910914)
@@ -513,20 +823,24 @@ ggplot(aes(x = estimate)) + geom_density(fill = "gray", alpha = 1/2) +
 
 - <span style="color:maroon">  Main problem - we use *early treated units* as controls for later treated units, which violates the *parallel trends assumption*! <span> 
 
-- When the treatment effect is "dynamic", i.e. takes more than one period to be incorporated into your dependent variable, you are *subtracting* the treatment effects from prior treated units from the estimate of future control units. 
+- When the treatment effect is "dynamic", i.e. takes more than one period to be incorporated into dependent variable, we are *subtracting* the treatment effects from prior treated units from the estimate of future control units. 
 
-- This biases your estimates towards zero when all the treatment effects are the same. 
+  - Recall the issue with $\Delta ATT > 0$ we discussed earlier. 
+
+- This biases TWFE estimates towards zero even though all the treatment effects are positive. 
 
 ---
 # .center.pull[Another Simulation]
 
-- Can we actually get estimates for $\color{maroon}{\delta}$ that are of the *wrong sign*? Yes, if treatment effects for early treated units are larger (in absolute magnitude) than the treatment effects on later treated units. 
+- Can we actually get <span style="color:maroon"> estimates for $\color{maroon}{\delta}$ that are of the *wrong sign* </span>? Yes, if treatment effects for early treated units are larger (in absolute magnitude) than the treatment effects on later treated units. 
+
+  - In this case, $\Delta ATT$ is positive and larger in absolute magnitude. 
 
 - Let's simulate another example in which units are randomly assigned to one of 20 states. The 20 states are randomly assigned into one of 5 treatment groups $G_g$ based on treatment being initiated in 1993, 1997, 2001, 2005, and 2009. 
 
-- All treated units incorporated in a state in treatment group $G_g$ receive a treatment effect $\delta_i \sim N(\delta_g, .2^2)$.
+- All treated units incorporated in a state in treatment group $G_g$ receive a treatment effect $\delta_i \sim N(\delta_g, 0.04)$.
 
-- The treatment effect is cumulative or dynamic - $\delta_{it} = \delta_i \times (year - G_g)$.
+- The treatment effect is dynamic - $\delta_{it} = \delta_i \times (year - G_g)$.
 
 ---
 # .center.pull[Another Simulation]
@@ -535,10 +849,10 @@ ggplot(aes(x = estimate)) + geom_density(fill = "gray", alpha = 1/2) +
 
 $\hspace{2cm}$
 
-```{r d7, message = FALSE, error = FALSE, echo = FALSE, cache = TRUE, results = 'asis'}
+```{r d11, message = FALSE, error = FALSE, echo = FALSE, cache = TRUE, results = 'asis'}
 treats <- tibble(
   "Cohort" = c(1993, 1997, 2001, 2005, 2009),
-  "Effect" =  c(0.5, 0.4, 0.3, 0.2, 0.1)
+  "Effect" =  c(0.7, 0.4, 0.3, 0.2, 0.1)
 )
 kable(treats, format = "html", align = 'c', 
                 booktabs = T, table.attr = "style='width:30%;'", caption = "<center><strong>Treatment Effect Averages</strong></center>", linesep = "") %>% 
@@ -548,24 +862,128 @@ kable(treats, format = "html", align = 'c',
 ---
 # .center.pull[Another Simulation]
 
-- First let's look at the distribution of $\color{maroon}{\delta^{DD}}$ using TWFE estimation with this simulated sample:
+```{r d12, echo = FALSE, warning = FALSE, message = FALSE, fig.align = 'center', cache = TRUE, fig.height = 6, fig.width = 10}
+# set seed
+set.seed(19910914)
 
-```{r d8, echo = FALSE, warning = FALSE, message = FALSE, fig.align = 'center', cache = TRUE, fig.height = 6, fig.width = 10}
+# Fixed Effects ------------------------------------------------
+# unit fixed effects
+unit <- tibble(
+  unit = 1:200, 
+  unit_fe = rnorm(200, 0, 0.5),
+  # generate state
+  state = sample(1:20, 200, replace = TRUE))
+
+# year fixed effects 
+year <- tibble(
+  year = 1990:2010,
+  year_fe = rnorm(21, 0, 0.5))
+
+# Trend Break -------------------------------------------------------------
+# Put the states into treatment groups
+treat_taus <- tibble(
+  # sample the states randomly
+  state = sample(1:20, 20, replace = FALSE),
+  # place the randomly sampled states into five treatment groups G_g
+  cohort_year = sort(rep(c(1993, 1997, 2001, 2005, 2009), 4)),
+  # assign them a mean treatment effect from 0.5 to 0.1
+  mu = sort(rep(c(.7, .4, .3, .2, .1), 4), decreasing = TRUE))
+
+# make main dataset
+# full interaction of unit X year 
+data <- expand_grid(unit = 1:200, year = 1990:2010) %>% 
+  left_join(., unit) %>% 
+  left_join(., year)
+
+# bring in the treatment indicators and values
+get_treat <- function(u) {
+  # get the state for the unit
+  st <- unit %>% filter(unit == u) %>% pull(state)
+  
+  # find the treatment year for the state
+  treat_yr <- treat_taus %>% filter(state == st) %>% pull(cohort_year)
+  
+  # treatment effect tau_g
+  mu <- treat_taus %>% filter(state == st) %>% pull(mu)
+  
+  # Make a data set with the results 
+  tibble(unit = rep(u, 21), 
+         year = 1990:2010,
+         # get a treatment cohort indicator
+         # make treatment indicator
+         treat = ifelse(year < treat_yr, 0, 1),
+         # get the treatment effect \tau_i for post-treatment years
+         cohort_year = treat_yr,
+         static_tau = rep(rnorm(1, mu, 0.1), 21),
+         tau = ifelse(year < treat_yr, 0, static_tau),
+         # cumulate the effect
+         tau_cum = cumsum(tau))
+  }
+
+# call the function over our 200 units
+treatments <- map_dfr(1:200, get_treat)
+
+# merge in the treatment effect data
+data <- left_join(data, treatments) %>% 
+  # simulate error and generate the dependent variable
+  mutate(error = rnorm(4200, 0, 0.1),
+         dep_var = unit_fe + year_fe + tau_cum + error)
+
+sim3_plot <- data %>% 
+ggplot(aes(x = year, y = dep_var, group = unit)) +
+# unit specific lines
+geom_line(alpha = 1/10, color = "grey") + 
+# group specific averages
+geom_line(
+  data = . %>% 
+    group_by(cohort_year, year) %>% 
+    dplyr::summarize(dep_var = mean(dep_var)),
+  aes(x = year, y = dep_var, group = factor(cohort_year),
+      color = factor(cohort_year)), size = 1) + 
+labs(x = "", y = "", color = "Group") + 
+ggtitle("Trends in Outcome Path") +
+geom_vline(xintercept = 1992.5, color = '#A7473A',
+           linetype = "dashed", size = 1) + 
+geom_vline(xintercept = 1996.5, color = '#4B5F6C',
+           linetype = "dashed", size = 1) + 
+geom_vline(xintercept = 2000.5, color = '#51806a',
+           linetype = "dashed", size = 1) + 
+geom_vline(xintercept = 2004.5, color = 'darkorange',
+           linetype = "dashed", size = 1) + 
+geom_vline(xintercept = 2008.5, color = 'skyblue',
+           linetype = "dashed", size = 1) + 
+scale_color_manual(values = c("#A7473A", "#4B5F6C", "#51806a", "darkorange", "skyblue")) + 
+scale_y_continuous(limits = c(-10, 15)) + 
+theme(legend.position = 'bottom',
+      legend.title = element_blank(),
+      plot.title = element_text(hjust = 0.5),
+      plot.subtitle = element_text(hjust = 0.5),
+      axis.title.y = element_text(hjust = 0.5, vjust = 0.5, angle = 360))
+
+sim3_plot
+```
+
+---
+# .center.pull[Another Simulation]
+
+- Let's look at the distribution of $\color{maroon}{\delta}$ using TWFE estimation with this simulated sample (red line represents 0 here).
+
+```{r d13, echo = FALSE, warning = FALSE, message = FALSE, fig.align = 'center', cache = TRUE, fig.height = 6, fig.width = 10}
 # set seed
 set.seed(19910914)
 runreg <- function(i){
-    # Fixed Effects ------------------------------------------------
+  # Fixed Effects ------------------------------------------------
   # unit fixed effects
   unit <- tibble(
     unit = 1:200, 
-    unit_fe = rnorm(200, 0, 1),
+    unit_fe = rnorm(200, 0, 0.5),
     # generate state
     state = sample(1:20, 200, replace = TRUE))
   
   # year fixed effects 
   year <- tibble(
     year = 1990:2010,
-    year_fe = rnorm(21, 0, 1))
+    year_fe = rnorm(21, 0, 0.5))
   
   # Trend Break -------------------------------------------------------------
   # Put the states into treatment groups
@@ -575,7 +993,7 @@ runreg <- function(i){
     # place the randomly sampled states into five treatment groups G_g
     cohort_year = sort(rep(c(1993, 1997, 2001, 2005, 2009), 4)),
     # assign them a mean treatment effect from 0.5 to 0.1
-    mu = sort(rep(c(.5, .4, .3, .2, .1), 4), decreasing = TRUE))
+    mu = sort(rep(c(.6, .4, .3, .2, .1), 4), decreasing = TRUE))
   
   # make main dataset
   # full interaction of unit X year 
@@ -602,7 +1020,7 @@ runreg <- function(i){
            treat = ifelse(year < treat_yr, 0, 1),
            # get the treatment effect \tau_i for post-treatment years
            cohort_year = treat_yr,
-           static_tau = rep(rnorm(1, mu, .2), 21),
+           static_tau = rep(rnorm(1, mu, 0.05), 21),
            tau = ifelse(year < treat_yr, 0, static_tau),
            # cumulate the effect
            tau_cum = cumsum(tau))
@@ -614,7 +1032,7 @@ runreg <- function(i){
   # merge in the treatment effect data
   data <- left_join(data, treatments) %>% 
     # simulate error and generate the dependent variable
-    mutate(error = rnorm(4200, 0, 0.5),
+    mutate(error = rnorm(4200, 0, 0.1),
            dep_var = unit_fe + year_fe + tau_cum + error)
   
    broom::tidy(felm(dep_var ~ treat | unit + year | 0 | state, data = data,
@@ -633,17 +1051,17 @@ simdata %>%
 ---
 # .center.pull[Goodman-Bacon Decomposition]
 
-```{r d9, echo = FALSE, warning = FALSE, message = FALSE, results = FALSE, fig.align = 'center', cache = TRUE, fig.width = 10}
+```{r d14, echo = FALSE, warning = FALSE, message = FALSE, results = FALSE, fig.align = 'center', cache = TRUE, fig.width = 10}
 # unit fixed effects
 unit <- tibble(
   unit = 1:200, 
-  unit_fe = rnorm(200, 0, 1),
+  unit_fe = rnorm(200, 0, 0.5),
   # generate state
   state = sample(1:20, 200, replace = TRUE))
 # year fixed effects 
 year <- tibble(
   year = 1990:2010,
-  year_fe = rnorm(21, 0, 1))
+  year_fe = rnorm(21, 0, 0.5))
 # Trend Break -------------------------------------------------------------
 # Put the states into treatment groups
 treat_taus <- tibble(
@@ -652,7 +1070,7 @@ treat_taus <- tibble(
   # place the randomly sampled states into five treatment groups G_g
   cohort_year = sort(rep(c(1993, 1997, 2001, 2005, 2009), 4)),
   # assign them a mean treatment effect from 0.5 to 0.1
-  mu = sort(rep(c(.5, .4, .3, .2, .1), 4), decreasing = TRUE))
+  mu = sort(rep(c(.7, .4, .3, .2, .1), 4), decreasing = TRUE))
 # make main dataset
 # full interaction of unit X year 
 data <- expand_grid(unit = 1:200, year = 1990:2010) %>% 
@@ -677,7 +1095,7 @@ get_treat <- function(u) {
          treat = ifelse(year < treat_yr, 0, 1),
          # get the treatment effect \tau_i for post-treatment years
          cohort_year = treat_yr,
-         static_tau = rep(rnorm(1, mu, .2), 21),
+         static_tau = rep(rnorm(1, mu, 0.05), 21),
          tau = ifelse(year < treat_yr, 0, static_tau),
          # cumulate the effect
          tau_cum = cumsum(tau))
@@ -687,7 +1105,7 @@ treatments <- map_dfr(1:200, get_treat)
 # merge in the treatment effect data
 data <- left_join(data, treatments) %>% 
   # simulate error and generate the dependent variable
-  mutate(error = rnorm(4200, 0, 0.5),
+  mutate(error = rnorm(4200, 0, 0.1),
          dep_var = unit_fe + year_fe + tau_cum + error)
 # calculate the bacon decomposition without covariates
 bacon_out <- bacon(dep_var ~ treat,
@@ -697,7 +1115,7 @@ bacon_out <- bacon(dep_var ~ treat,
 ```
 
 
-```{r d10, echo = FALSE, warning = FALSE, message = FALSE, fig.align = 'center', cache = TRUE, fig.width = 10}
+```{r d15, echo = FALSE, warning = FALSE, message = FALSE, fig.align = 'center', cache = TRUE, fig.width = 10}
 bacon_out %>% 
   ggplot(aes(x = weight, y = estimate, shape = factor(type), color = factor(type))) +
   geom_point(size = 3) +
@@ -710,20 +1128,47 @@ bacon_out %>%
         axis.text = element_text(size = 16))
 ```
 
----
-# .center.pull[Callaway & Sant'Anna]
-
-- Inverse propensity weighted (IPW) long-difference in cohort-specific average treatment effects between treated and untreated units for a given treatment cohort. 
-
-$$\begin{equation} ATT(g, t) = \mathbb{E} \left[\left( \frac{G_g}{\mathbb{E}[G_g]} - \frac{\frac{p_g(X)C}{1 - p_g(X)}}{\mathbb{E}\left[\frac{p_g(X)C}{1 - p_g(X)} \right]} \right) \left(Y_t - T_{g - 1}\right)\right] \end{equation}$$
-
-
-- Without covariates, as in the simulated example here, it calculates the simple long difference between all treated units $i$ in relative year $k$ with all potential control units that have not yet been treated by year $k$.
 
 ---
-# .center.pull[Callaway & Sant'Anna]
+# .center.pull[Outline of Lecture]
 
-```{r d11, echo = FALSE, warning = FALSE, message = FALSE, fig.align = 'center', cache = TRUE, fig.width = 10}
+$\hspace{2cm}$
+
+1. <span style="color:maroon"> Overview of Difference-in-Differences (DiD) </span>
+
+2. <span style="color:maroon"> Two-Way Fixed Effects (TWFE) Estimator </span>
+
+3. <span style="color:maroon"> Problems with Using TWFE Estimator for DiD with Multiple Time Periods </span>
+
+4. <span style="color:maroon"> Simulation Examples </span>
+
+5. <span style="color:maroon"> Alternative Difference-in-Differences Estimators </span>
+
+6. Conclusion and Recommendations
+
+---
+# .center.pull[Callaway & Sant'Anna (CS)]
+
+- CS estimator starts with <span style="color:maroon"> group-time average treatment effects - $ATT_(g,t)$ </span>. 
+
+  - Consider a treatment group $g$ that have $t$ time periods and CS breaks it down to many 2x2 DiD. 
+  
+  - For each 2x2 DiD, estimate $ATT_(g,t) = E[Y_t(g)-Y_t(0)|G_g = 1]$.
+  
+  - Only <span style="color:maroon"> clean controls (never treated or not yet treated) </span> are used. 
+
+- There are multiple ways to aggregate group-time average treatment effects. 
+
+  - Aggregate by treatment group $g$. 
+  
+  - Aggregate by relative time to treatment (event study): $t-g=e$. 
+  
+  - A single aggregated ATT: $t \ge g$.
+
+---
+# .center.pull[Callaway & Sant'Anna (CS)]
+
+```{r d16, echo = FALSE, warning = FALSE, message = FALSE, fig.align = 'center', cache = TRUE, fig.width = 10}
 # create a lead/lag indicators
 data <- data %>% 
   # variable with relative year from treatment
@@ -745,7 +1190,7 @@ weights <- data %>%
   mutate(total = sum(n),
          perc = n / total) %>% 
   # keep just the variables we need
-  select(rel_year, cohort_year, perc) %>% 
+  dplyr::select(rel_year, cohort_year, perc) %>% 
   ungroup() %>% 
   rowwise() %>% 
   # add variable equal to coefficient from regression
@@ -760,7 +1205,7 @@ true_effect <- weights %>%
       rel_year >= 0 ~ rel_year + 1),
     # add in the tau_g values 
     tau_g = case_when(
-      cohort_year == 1993 ~ .5,
+      cohort_year == 1993 ~ .7,
       cohort_year == 1997 ~ .4,
       cohort_year == 2001 ~ .3,
       cohort_year == 2005 ~ .2),
@@ -771,6 +1216,7 @@ true_effect <- weights %>%
   summarize(true_tau = weighted.mean(effect, w = perc)) %>% 
   # make the time variable for merging
   mutate(t = rel_year)
+
 # run the CS algorithm
 CS_out <- att_gt("dep_var", data = data,
                  gname="cohort_year",
@@ -815,21 +1261,26 @@ tibble(
 ```
 
 ---
-# .center.pull[Abraham and Sun]
+# .center.pull[Sun and Abraham (SA)]
 
-- A relatively straightforward extension of the standard event-study TWFE model:
+- SA can be viewed as an <span style="color:maroon"> extension of the standard event study TWFE model </span>:
 
 $$y_{it} = \alpha_i + \alpha_t + \sum_e \sum_{l \neq -1} \delta_{el}(1\{E_i = e\} \cdot D_{it}^l) + \epsilon_{it}$$
+  
+  - In the regression above, $e$ denotes treatment group and $l$ denotes relative time to treatment. 
+  
+- Similar to CS estimator, SA estimator also uses <span style="color:maroon"> clean controls (never treated or last treated) </span>. 
 
-- You saturate the relative time indicators (i.e. t = -2, -1, ...) with indicators for the treatment initiation year group, and aggregate to overall aggregate relative time indicators by cohort size.
+- We saturate the relative time indicators (i.e. t = -2, -1, ...) with treatment group indicators, and aggregate to overall aggregate relative time indicators by cohort size.
 
-- In the case of no covariates, this gives you the same estimate as Callaway & Sant'Anna if you *fully saturate* the model with time indicators (leaving only two relative year identifiers missing).
+- In the case of no covariates, this gives you the same estimate as CS estimator if you fully saturate the model with time indicators (leaving only two relative year identifiers missing).
 
 - The authors don't claim that it can be used with covariates, but it seemingly follows if we think it is okay with normal TWFE DiD. 
 
 ---
-# .center.pull[Abraham and Sun]
-```{r d12, echo = FALSE, warning = FALSE, message = FALSE, fig.align = 'center', cache = TRUE, fig.width = 10}
+# .center.pull[Sun and Abraham (SA)]
+
+```{r d17, echo = FALSE, warning = FALSE, message = FALSE, fig.align = 'center', cache = TRUE, fig.width = 10}
 ## Make cohort-relative time dummies
 # relative year dummies
 rel_year <- data %>% select(rel_year) %>% 
@@ -912,34 +1363,50 @@ AS_plot %>%
         axis.text = element_text(size = 16))
 ```
 
+
 ---
 # .center.pull[Model Comparison]
 
 - **Callaway & Sant'Anna**
   
-  - Can be *very* flexible in determining which control units to consider, including never-treated and not-yet-treated. 
+  - Can be <span style="color:maroon"> very flexible in determining which control units to use, including never treated and not yet treated </span>. 
   - Has a more flexible functional form as well (easier to adjust for pre-treatment covariates).
-  - *Doubly robust* estimation: combine propensity score and linear regression so that we will get unbiased estimate if either model specification is correct.
+  - <span style="color:maroon"> Doubly robust </span> estimation: combine propensity score and outcome regression so that we will get unbiased estimate if either model specification is correct.
 
 - **Abraham & Sun** 
   
-  - Very similar to regular TWFE OLS and hence easy to explain. 
-  - Control units are all units not treated within the data sample. If most of your units are treated by the end (or all), this can make control units very non-representative and restricted.
+  - Very <span style="color:maroon">similar to regular TWFE </span> and thus easy to explain. 
+  - Control units are not treated or last treated within the data sample. If most of the units are treated by the end (or all), this can make <span style="color:maroon"> control units very non-representative and restricted </span>.
 
-- Without covariates, **Callaway & Sant'Anna** and **Abraham & Sun** yield same results. 
+---
+# .center.pull[Outline of Lecture]
+
+$\hspace{2cm}$
+
+1. <span style="color:maroon"> Overview of Difference-in-Differences (DiD) </span>
+
+2. <span style="color:maroon"> Two-Way Fixed Effects (TWFE) Estimator </span>
+
+3. <span style="color:maroon"> Problems with Using TWFE Estimator for DiD with Multiple Time Periods </span>
+
+4. <span style="color:maroon"> Simulation Examples </span>
+
+5. <span style="color:maroon"> Alternative Difference-in-Differences Estimators  </span>
+
+6. <span style="color:maroon"> Conclusion and Recommendations  </span>
 
 ---
 # .center.pull[What Are The Best Practices?]
 
-- It is still safe to use TWFE DiD when:  
-  - there is only a **single treatment period**; 
-  - the treatment effects are **homogeneous**. 
+- TWFE can produce unbiased estimate of staggered DiD when:  
+  - there is only a <span style="color:maroon"> single treatment period </span>; 
+  - the treatment effects are <span style="color:maroon"> homogeneous </span>, however, we usually do not know if the treatments are homogeneous or not. 
 
 - When there are multiple time periods, we should consider to: 
-  - plot the **treatment timing across cohorts**; 
-  - decompose the TWFE estimator with **Bacon-decomposition**. 
+  - plot the <span style="color:maroon"> treatment timing across cohorts </span>; 
+  - decompose the TWFE estimator with <span style="color:maroon"> Bacon-decomposition </span>. 
 
-- When using event-study specification, we should **avoid binning relative-time periods** unless we have reasons to believe homogeneous effects apply in the relative-time periods within a bin.
+- When using event-study specification, we should <span style="color:maroon"> avoid binning relative-time periods </span> unless we have reasons to believe homogeneous effects apply in the relative-time periods within a bin.
 
 ---
 
@@ -951,25 +1418,25 @@ AS_plot %>%
 ---
 # .center.pull[What Are The Best Practices?]
 
-- If there is justifiable concern for bias, we should apply at least one of the **alternative estimators**.
+- If there is justifiable concern for bias, we should apply at least one of the <span style="color:maroon"> alternative estimators </span>.
   - *Callaway & Sant'Anna, Abraham and Sun, de Chaisemartin-D'Haultfoeuille, etc.*
 
-- When using the alternative estimators, we should justify their choice of **clean comparison groups** (not-yet treated, last treated, or never treated) and articulate why the parallel-trends assumption is likely to apply.
+- When using the alternative estimators, we should justify their choice of <span style="color:maroon"> clean comparison groups (never treated or not yet treated) </span> and articulate why the parallel-trends assumption is likely to apply.
 
-- Regardless of the estimators used, static DiD estimates should be accompanied by **event-study estimates**. 
+- Regardless of the estimators used, static DiD estimates should be accompanied by <span style="color:maroon"> event-study estimates </span>. 
 
-- It is good practice to use more than one alternative estimators and compare their estimates. However, it is really uncessary to include all the available estimators...
+- It is good practice to use more than one alternative estimators and check if the estimates are consistent. 
 
 ---
 
-# .center.pull[This Is Fine]
+# .center.pull[Five Different Estimators]
 <center>
 
 <img src="https://raw.githubusercontent.com/borusyak/did_imputation/main/five_estimators_example.png", width = "62%">
 
 ---
 
-# .center.pull[This Is Too Much]
+# .center.pull[Seven Different Estimators]
 <center>
 
 <img src="https://raw.githubusercontent.com/pietrosantoleri/staggered_did/main/output/seven_estimators_example_allt.png", width = "65%">
@@ -980,13 +1447,11 @@ AS_plot %>%
 
 - TWFE estimator is a power tool and we should still use it for DiD when appropriate.
 
-- However, we should make sure we understand what we're doing. DiD is a **comparison of means** and at a minimum we should know which means we're comparing. 
+- However, we should make sure we understand what we're doing. DiD is a <span style="color:maroon"> comparison of means </span> and at a minimum we should know which means we're comparing. 
 
-- Multiple new methods have been proposed, all of which ensure that you **aren't using prior treated units as controls**. 
+- Multiple new methods have been proposed, all of which ensure that you <span style="color:maroon"> aren't using prior treated units as controls </span>. 
 
-- You should probably tailor your selection of method to your **data structure**: they use and discard different amount of control units and depending on your setting this might matter. 
-
-- You don't have to use all the new methods in your project! 
+- You should probably tailor your selection of method to your <span style="color:maroon"> data structure </span>: they use and discard different amount of control units and depending on your setting this might matter. 
 
 ---
 # .center.pull[References]

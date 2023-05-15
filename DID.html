@@ -4,7 +4,7 @@
     <title>Difference-in-Differences with Multiple Time Periods</title>
     <meta charset="utf-8" />
     <meta name="author" content="Mingyu Qi" />
-    <meta name="date" content="2023-05-11" />
+    <meta name="date" content="2023-05-15" />
     <script src="libs/header-attrs-2.20/header-attrs.js"></script>
     <link href="libs/remark-css-0.0.1/tamu.css" rel="stylesheet" />
     <link href="libs/remark-css-0.0.1/tamu-fonts.css" rel="stylesheet" />
@@ -25,7 +25,7 @@ class: center, middle, inverse, title-slide
 ### The University of Chicago
 ]
 .date[
-### 2023-05-11
+### 2023-05-15
 ]
 
 ---
@@ -52,69 +52,112 @@ class: center, middle, inverse, title-slide
 6. Conclusion and Recommendations
 
 ---
+# .center.pull[Outline of Lecture]
+
+`\(\hspace{2cm}\)`
+
+1. &lt;span style="color:maroon"&gt; Overview of Difference-in-Differences (DiD) &lt;/span&gt;
+
+2. Two-Way Fixed Effects (TWFE) Estimator
+
+3. Problems with Using TWFE Estimator for DiD with Multiple Time Periods
+
+4. Simulation Examples
+
+5. Alternative Difference-in-Differences Estimators
+
+6. Conclusion and Recommendations
+
+---
 # .center.pull[Difference-in-Differences]
 
 `\(\hspace{2cm}\)`
 
-- Revisit **Card and Krueger (1993)** minimum wage and employment study comparing NJ and PA.
+Let us start with a classic difference-in-differences set-up 
 
-- 2 units and 2 time periods.
+  - There are 2 units (treated and control) and 2 time periods (0 and 1).
 
-- 1 treated unit (T), which receives treatment in the second period. 
+  - The treated unit (T) receives treatment in the second period. 
 
-- 1 control unit (C), which is never treated.  
+  - The control unit (C) is never treated;
+  
+  - We call this a &lt;span style="color:maroon"&gt; 2x2 DiD &lt;/span&gt;.
 
 ---
-
 # .center.pull[Difference-in-Differences]
 
 &lt;img src="DID_files/figure-html/d1-1.png" width="720" style="display: block; margin: auto;" /&gt;
 
 
 ---
-
 # .center.pull[Difference-in-Differences]
-
-- Building upon **Angrist &amp; Pischke (2008, p. 228)** we can think of the simple 2x2 DiD as a fixed effects estimator.
-
-- Potential Outcomes 
-  - `\(Y_{i, t}^0\)` = value of dependent variable for unit `\(i\)` in period `\(t\)` without treatment.
-  - `\(Y_{i, t}^1\)` = value of dependent variable for unit `\(i\)` in period `\(t\)` with treatment.
-  
-- The expected outcome is a *linear function* of unit and time fixed effects:
-`$$E[{Y_{i, t}^0}] =\alpha_i + \alpha_t$$`
-`$$E[{Y_{i, t}^1}] =\alpha_i + \alpha_t + \color{maroon}{\delta} D_{st}$$`
-- The goal of DiD is to get an *unbiased estimate* of the treatment effect `\(\color{maroon}{\delta}\)`.
-
-
----
-# .center.pull[Difference-in-Differences]
-
-- Difference in expectations for the *control* unit between times t = 1 and t = 0:
-`$$\begin{align*} E[Y_{C, 1}^0] &amp; = \alpha_1 + \alpha_C \\ E[Y_{C, 0}^0] &amp; = \alpha_0 + \alpha_C  \\ E[Y_{C, 1}^0] - E[Y_{C, 0}^0] &amp; = \alpha_1 - \alpha_0 \end{align*}$$`
- 
-- Now do the same thing for the *treated* unit:
-   `$$\begin{align*} E[Y_{T, 1}^1] &amp; = \alpha_1 + \alpha_T + \color{maroon}{\delta} \\ E[Y_{T, 0}^1] &amp; = \alpha_0 + \alpha_T  \\ E[Y_{T, 1}^1] - E[Y_{T, 0}^1] &amp; = \alpha_1 - \alpha_0 + \color{maroon}{\delta} \end{align*}$$`
-- If we assume the linear structure of DiD, then unbiased estimate of `\(\color{maroon}{\delta}\)` is:
-
-`$$\color{maroon}{\delta} =
-    \begin{align*} &amp; \left( E[Y_{T, 1}^1] - E[Y_{T, 0}^1] \right) - \left( E[Y_{C, 1}^0] - E[Y_{C, 0}^0] \right) \end{align*}$$`
-
----
-
-# .center.pull[Two-Way Differencing]
 
 &lt;img src="DID_files/figure-html/d2-1.png" width="720" style="display: block; margin: auto;" /&gt;
 
 ---
+# .center.pull[Outline of Lecture]
 
+`\(\hspace{2cm}\)`
+
+1. &lt;span style="color:maroon"&gt; Overview of Difference-in-Differences (DiD) &lt;/span&gt;
+
+2. &lt;span style="color:maroon"&gt; Two-Way Fixed Effects (TWFE) Estimator &lt;/span&gt;
+
+3. Problems with Using TWFE Estimator for DiD with Multiple Time Periods
+
+4. Simulation Examples
+
+5. Alternative Difference-in-Differences Estimators
+
+6. Conclusion and Recommendations
+
+---
+# .center.pull[Two-Way Fixed Effects (TWFE) DiD]
+
+- Building upon &lt;span style="color:maroon"&gt; Angrist &amp; Pischke (2008, p. 228) &lt;/span&gt;, we can think of the simple 2x2 DiD as a &lt;span style="color:maroon"&gt; fixed effects estimator &lt;/span&gt;.
+
+- Potential Outcomes 
+  - `\(E[Y_{i,t}|D=0]\)` = value of outcome for unit `\(i\)` in period `\(t\)` for the &lt;span style="color:maroon"&gt; control &lt;/span&gt;.
+  - `\(E[Y_{i,t}|D=1]\)` = value of outcome for unit `\(i\)` in period `\(t\)` for the &lt;span style="color:maroon"&gt; treated &lt;/span&gt;.
+  
+- The expected outcome is a *linear function* of unit and time fixed effects
+`$$E[Y_{i,t}|D=0] =\alpha_i + \alpha_t$$`
+`$$E[Y_{i,t}|D=1] =\alpha_i + \alpha_t + \color{maroon}{\delta} D_{it}$$`
+
+- The goal of DiD is to get an *unbiased estimate* of the treatment effect `\(\color{maroon}{\delta}\)`.
+
+---
+# .center.pull[Two-Way Differencing]
+
+- Difference in expectations for the &lt;span style="color:maroon"&gt; control (C) &lt;/span&gt; unit 
+  - `\(E[Y_{i,t}|i = C, t = 0] = \alpha_C + \alpha_0\)`
+  - `\(E[Y_{i,t}|i = C, t = 1] = \alpha_C + \alpha_1\)`
+  - Difference between time 1 and time 0: `\(\alpha_1 - \alpha_0\)`
+
+- Difference in expectations for the &lt;span style="color:maroon"&gt; treated (T) &lt;/span&gt; unit 
+  - `\(E[Y_{i,t}|i = T, t = 0] = \alpha_T + \alpha_0\)`
+  - `\(E[Y_{i,t}|i = T, t = 1] = \alpha_T + \alpha_1 + \color{maroon}{\delta}\)`
+  - Difference between time 1 and time 0: `\(\alpha_1 - \alpha_0 + \color{maroon}{\delta}\)`
+
+- If we assume the linear structure of DiD, then unbiased estimate of `\(\color{maroon}{\delta}\)` is:
+
+`$$\color{maroon}{\delta} =
+    \begin{align*} &amp; \left( E[Y_{i,t}|i = T, t = 1] - E[Y_{i,t}|i = T, t = 0] \right) - \left( E[Y_{i,t}|i = C, t = 1] - E[Y_{i,t}|i = C, t = 0] \right) \end{align*}$$`
+
+---
+# .center.pull[Two-Way Differencing]
+
+&lt;img src="DID_files/figure-html/d3-1.png" width="720" style="display: block; margin: auto;" /&gt;
+
+---
 # .center.pull[Regression DiD]
 
-The DiD can be estimated through linear regression of the form:
+Recall that DiD can be estimated through linear regression of the form:
 
 `$$\tag{1} y_{it} = \alpha + \beta_1 TREAT_i + \beta_2 POST_t + \color{maroon}{\delta} (TREAT_i \cdot POST_t) + \epsilon_{it}$$`
 
-The coefficients from the regression estimate in (1) recover the same parameters as the two-way differencing performed above:
+The coefficients from the regression estimate in (1) recover the same parameters as the two-way differencing we performed earlier:
+
 `$$\begin{align*} 
     \alpha &amp;= E[y_{it} | i = C, t = 0] = \alpha_0 + \alpha_C \\
     \\
@@ -125,7 +168,7 @@ The coefficients from the regression estimate in (1) recover the same parameters
     &amp;= (\alpha_1 + \alpha_C) - (\alpha_0 + \alpha_C) = \alpha_1 - \alpha_0 \\
     \\
     \color{maroon}{\delta} &amp;= \left(E[y_{it} | i = T, t = 1] - E[y_{it} | i = T, t = 0] \right) - \\
-    &amp;\hspace{.5cm} \left(E[y_{it} | i = C, t = 1] - E[y_{it} | i = C t = 0] \right) = \delta
+    &amp;\hspace{.5cm} \left(E[y_{it} | i = C, t = 1] - E[y_{it} | i = C t = 0] \right)
     \end{align*}$$`
     
 ---
@@ -133,72 +176,139 @@ The coefficients from the regression estimate in (1) recover the same parameters
 
 - Regression DiD provides both estimates of `\(\color{maroon}{\delta}\)` and standard errors for the estimates.
 
-- **Angrist &amp; Pischke (2008)**:
+- &lt;span style="color:maroon"&gt; Angrist &amp; Pischke (2008) &lt;/span&gt;:
   - "It's also easy to add additional (units) or periods to the regression setup... [and] it's easy to add additional covariates."
 
 - &lt;span style="color:maroon"&gt; Two-way fixed effects estimator &lt;span&gt;:
-`$$y_{it} = \alpha_i + \alpha_t + \color{maroon}{\delta^{DD}} D_{it} + \epsilon_{it}$$`
+`$$y_{it} = \alpha_i + \alpha_t + \color{maroon}{\delta} D_{it} + \epsilon_{it}$$`
 
   - `\(\alpha_i\)` and `\(\alpha_t\)` are unit and time fixed effects, `\(D_{it}\)` is the unit-time indicator for treatment.
   
-  - `\(TREAT_i\)` and `\(POST_t\)` now subsumed by the fixed effects.
+  - `\(TREAT_i\)` and `\(POST_t\)` now subsumed by the unit fixed effects `\(\alpha_i\)` and time fixed effects `\(\alpha_t\)`, respectively.
   
-  - Can be easily modified to include covariate matrix `\(X_{it}\)`, time trends, dynamic treatment effects estimation, etc. 
+  - TWFE estimator be easily modified to include covariate matrix `\(X_{it}\)`, time trends, dynamic treatment effects estimation, etc. 
+  
+---
+# .center.pull[TWFE DiD]
+
+- Recall the beer tax example we used in the lecture on panel data analysis, where each unit is a state, each time period is a year, the treatment is beer tax rate, and the outcome is traffic fatalities. If we treat beer tax as a binary indicator (e.g., whether there is a increase in beer tax), it will be as same as the example we just went over. 
+
+- TWFE DiD allows us to control for variables that change cross states but are constant over time and variables that change over time but are constant across states. 
+
+- However, &lt;span style="color:maroon"&gt; contemporaneous trends &lt;/span&gt; could confound the treatment effect of interest. For instance, coincident changes in DUI punishment may confound the estimated effect of beer tax on traffic fatalities. 
+
+- Researchers often use &lt;span style="color:maroon"&gt; staggered DiD, which means different units receive treatment at different periods in time, &lt;/span&gt; to address this concern. In the beer tax example, it means that states increase their beer tax in different years. 
+
+- TWFE DiD with staggered treatment timing is commonly used. Researchers sometimes use an event study version of TWFE to estimate dynamic treatment effects. 
+
+---
+# .center.pull[Event Study TWFE]
+
+&lt;img src="DID_files/figure-html/d4-1.png" width="720" style="display: block; margin: auto;" /&gt;
+
+---
+# .center.pull[Outline of Lecture]
+
+`\(\hspace{2cm}\)`
+
+1. &lt;span style="color:maroon"&gt; Overview of Difference-in-Differences (DiD) &lt;/span&gt;
+
+2. &lt;span style="color:maroon"&gt; Two-Way Fixed Effects (TWFE) Estimator &lt;/span&gt;
+
+3. &lt;span style="color:maroon"&gt; Problems with Using TWFE Estimator for DiD with Multiple Time Periods &lt;/span&gt;
+
+4. Simulation Examples
+
+5. Alternative Difference-in-Differences Estimators
+
+6. Conclusion and Recommendations
 
 ---
 # .center.pull[Where TWFE Goes Wrong]
 
-- Recent development in econometrics on the issues with TWFE DiD with "staggered treatment timing" (**de Chaisemartin and D’Haultfœuille (2020), Callaway and Sant’Anna (2021), Goodman-Bacon (2021), Sun and Abraham (2021)**)
+- Before 2018, people knew little about how TWFE DiD measures when treatment timing varies, how it compares means across groups, or why different specifications change estimates.
 
-  - Different units receive treatment at different periods in time.
-  
-- Staggered DiD is commonly used. It helps to increase the amount of cross-sectional variation if done correctly. 
+- Recent development in econometrics on the issues with TWFE DiD with staggered treatment timing (&lt;span style="color:maroon"&gt; de Chaisemartin and D’Haultfœuille (2020), Callaway and Sant’Anna (2021), Goodman-Bacon (2021), Sun and Abraham (2021), Borusyak et al. (2022) &lt;/span&gt;)
 
-- What really happened behind the scenes: 
+  - TWFE DiD with staggered treatment timing is a &lt;span style="color:maroon"&gt; weighted average of many different 2x2 DiD treatment effects &lt;/span&gt;. 
   
-  - &lt;span style="color:maroon"&gt; `\(\color{maroon}{\delta^{DD}}\)` with staggered treatment timing is a weighted average of many different treatment effects &lt;span&gt;. 
+  - In case of staggered treatment timing and treatment effect heterogeneity, the TWFE DiD estimates are likely biased.
+    
+  - The weights are sometimes &lt;span style="color:maroon"&gt; negative &lt;/span&gt;, which is due to the issue that &lt;span style="color:maroon"&gt; already-treated units acting as effective comparison units for not-yet-treated units (bad comparisons) &lt;/span&gt;.
   
-  - The weights are sometimes negative and non-intuitive.
-  
-  - Before 2018, people knew little about how TWFE measures when treatment timing varies, how it compares means across groups, or why different specifications change estimates.
+  - Dynamic effect estimates from event study TWFE estimator cannot help to address the problem above. 
   
 ---
 # .center.pull[Bias with TWFE - Goodman-Bacon (2021)]
 
-- **Goodman-Bacon (2021)** provides a clear graphical intuition for the bias. Assume three treatment groups - never treated units (U), early treated units (k), and later treated units (l).
+- **Goodman-Bacon (2021)** provides a clear graphical intuition for the bias. We assume three treatment groups - never treated units (U), early treated units (k), and later treated units (l).
 
-&lt;img src="DID_files/figure-html/d3-1.png" width="504" style="display: block; margin: auto;" /&gt;
+&lt;img src="DID_files/figure-html/d5-1.png" width="504" style="display: block; margin: auto;" /&gt;
 
 ---
 # .center.pull[Bias with TWFE - Goodman-Bacon (2021)]
 
 - **Goodman-Bacon (2021)** shows that we can form four different 2x2 groups in this setting, where the effect can be estimated using the simple regression DiD in each group:
 
-&lt;img src="DID_files/figure-html/d4-1.png" width="504" style="display: block; margin: auto;" /&gt;
+&lt;img src="DID_files/figure-html/d6-1.png" width="504" style="display: block; margin: auto;" /&gt;
 
 ---
 # .center.pull[Bias with TWFE - Goodman-Bacon (2021)]
 
-- Some important Insights
+- `\(\color{maroon}{\delta}\)` is the weighted average of the four 2x2 treatment effects. The weights are a function of the &lt;span style="color:maroon"&gt; size of the sub-sample, relative size of treatment and control groups, and treatment variance in the sub-sample &lt;/span&gt;.
 
-  - `\(\color{maroon}{\delta^{DD}}\)` is just the *weighted average* of the four 2x2 treatment effects. The weights are a function of the *size of the sub-sample, relative size of treatment and control units, and the timing of treatment in the sub-sample*.
+  - Size `\(N_k\)` is calculated as the share of the full sample. 
   
-  - Already-treated units act as controls even though they are treated.
+  - For a treatment group that receives treatment at time t, the treatment variance is calculated as `\(\frac{t}{T}\times(1-\frac{t}{T})\)`. 
   
-  - Given the weighting function, panel length alone can change the DiD estimates substantially, even when each `\(\color{maroon}{\delta^{DD}}\)` does not change.
-  
-  - Groups treated closer to middle of panel receive higher weights than those treated earlier or later.
-  
+- The weights are larger when the size of the sub-sample is larger, treatment and control groups are closer in size, or treatment variance in the sub-sample is larger. 
+
+- All else equal, groups treated closer to middle of panel receive higher weights than those treated earlier or later. This is because such groups have larger treatment variance in the sub-sample. 
+
+- Since the weights are not equal to the sample shares, `\(\color{maroon}{\delta}\)` will not equal the sample `\(ATT\)`. 
+
 ---
-# .center.pull[Simulation Exercise]
+# .center.pull[Bias with TWFE - Goodman-Bacon (2021)]
 
-- Can show how easily `\(\color{maroon}{\delta^{DD}}\)` goes wrong through a simulation exercise.
+- The paper further shows that &lt;span style="color:maroon"&gt; `\(\color{maroon}{\delta} = VWATT + VWCT - \Delta ATT\)` &lt;/span&gt;
+
+  - `\(VWATT\)`: variance-weighted average treatment effect on the treated. 
+  
+  - `\(VWCT\)`: variance-weighted common trend.
+  
+  - `\(\Delta ATT\)`: weighted sum of the change in `\(ATT\)` within a treatment-timing group's post-period and around a later-treated unit's treatment window. TWFE DiD uses already-treated units as effective control for later-treated groups. In case of heterogeneous treatment effect, changes in already-treated groups' outcome values will be contaminated by changes in treatment effects over time. 
+
+- Two sources of potential bias 
+
+  - Treatment effects vary across units: &lt;span style="color:maroon"&gt; the treatment effects of units treated towards the middle of the time window significantly differ from other treatment effects &lt;/span&gt;, the TWFE DiD is likely biased.  
+  
+  - Treatment effects vary across time: &lt;span style="color:maroon"&gt; treatment effect is time-varying within a treated unit, which lead to `\(\Delta ATT &gt; 0\)`. &lt;/span&gt; In this case, TWFE DiD will yield estimates that are too small or even wrong-signed.  
+
+---
+# .center.pull[Outline of Lecture]
+
+`\(\hspace{2cm}\)`
+
+1. &lt;span style="color:maroon"&gt; Overview of Difference-in-Differences (DiD) &lt;/span&gt;
+
+2. &lt;span style="color:maroon"&gt; Two-Way Fixed Effects (TWFE) Estimator &lt;/span&gt;
+
+3. &lt;span style="color:maroon"&gt; Problems with Using TWFE Estimator for DiD with Multiple Time Periods &lt;/span&gt;
+
+4. &lt;span style="color:maroon"&gt; Simulation Examples &lt;/span&gt;
+
+5. Alternative Difference-in-Differences Estimators
+
+6. Conclusion and Recommendations
+
+---
+# .center.pull[Simulation Example]
 
 - Consider two sets of DiD estimates - one where the treatment occurs in one period, and one where the treatment is staggered.
 
 - The data generating process (DGP) is linear: `\(y_{it} = \alpha_i + \alpha_t + \color{maroon}{\delta_{it}} + \epsilon_{it}\)`.
-  - `\(\alpha_i, \alpha_t \sim N(0, 1)\)`
-  - `\(\epsilon_{i, t} \sim N\left(0, \left(\frac{1}{2}\right)^2\right)\)`
+  - `\(\alpha_i, \alpha_t \sim N(0, (0.5)^2)\)`
+  - `\(\epsilon_{i, t} \sim N\left(0, (0.1)^2\right)\)`
   
 - We will consider two different treatment assignment set ups for `\(\color{maroon}{\delta_{it}}\)`.
 
@@ -209,9 +319,9 @@ The coefficients from the regression estimate in (1) recover the same parameters
 
 - Data covers years 1990 to 2010, and half the states receive "treatment" in 2000. 
 
-- For every unit incorporated in a treated state, we pull a unit-specific treatment effect from `\(\mu_i \sim N(0.3, (1/5)^2)\)`.
+- For every unit incorporated in a treated state, we pull a unit-specific treatment effect from `\(\mu_i \sim N(0.3, (0.1)^2)\)`.
 
-- Treatment effects here are trend breaks rather than unit shifts: the accumulated treatment effect `\(\color{maroon}{\delta_{it}}\)` is `\(\mu_i \times (year - 1995 + 1)\)` for years after 2000. 
+- Treatment effects here are trend breaks rather than unit shifts: the accumulated treatment effect `\(\color{maroon}{\delta_{it}}\)` is `\(\mu_i \times (year - 2000 + 1)\)` for years after 2000. 
 
 - We then estimate the average treatment effect as `\(\color{maroon}{\hat{\delta}}\)` from:
 
@@ -219,17 +329,25 @@ The coefficients from the regression estimate in (1) recover the same parameters
 
 - Simulate this data 500 times and plot the distribution of estimates `\(\color{maroon}{\hat{\delta}}\)` and the true effect (red line).
 
+- True effect is a simple average of treatment effects across all years:
+$$ \frac{(0.3 + 0.6 + ... + 3.3)}{11} = 1.8 $$
+
 ---
 # .center.pull[Simulation 1 - 1 Period Treatment]
 
-&lt;img src="DID_files/figure-html/d5-1.png" width="720" style="display: block; margin: auto;" /&gt;
+&lt;img src="DID_files/figure-html/d7-1.png" width="720" style="display: block; margin: auto;" /&gt;
+
+---
+# .center.pull[Simulation 1 - 1 Period Treatment]
+
+&lt;img src="DID_files/figure-html/d8-1.png" width="720" style="display: block; margin: auto;" /&gt;
 
 ---
 # .center.pull[Simulation 2 - Staggered Treatment]
 
 - Run similar analysis with staggered treatment. 
 
-- The 20 states are randomly assigned into four treatment cohorts of size 50 depending on year of treatment assignment (1994, 1998, 2002, and 2004)
+- The 20 states are randomly assigned into four treatment cohorts (1994, 1998, 2002, and 2004) of size 50.
 
 - DGP is identical, except that now `\(\color{maroon}{\delta_{it}}\)` is equal to `\(\mu_i \times (year - \tau_g + 1)\)` where `\(\tau_g\)` is the treatment assignment year. 
 
@@ -238,27 +356,36 @@ The coefficients from the regression estimate in (1) recover the same parameters
 ---
 # .center.pull[Simulation 2 - Staggered Treatment]
 
-&lt;img src="DID_files/figure-html/d6-1.png" width="720" style="display: block; margin: auto;" /&gt;
+&lt;img src="DID_files/figure-html/d9-1.png" width="720" style="display: block; margin: auto;" /&gt;
+
+---
+# .center.pull[Simulation 2 - Staggered Treatment]
+
+&lt;img src="DID_files/figure-html/d10-1.png" width="720" style="display: block; margin: auto;" /&gt;
 
 ---
 # .center.pull[Simulation 2 - Staggered Treatment]
 
 - &lt;span style="color:maroon"&gt;  Main problem - we use *early treated units* as controls for later treated units, which violates the *parallel trends assumption*! &lt;span&gt; 
 
-- When the treatment effect is "dynamic", i.e. takes more than one period to be incorporated into your dependent variable, you are *subtracting* the treatment effects from prior treated units from the estimate of future control units. 
+- When the treatment effect is "dynamic", i.e. takes more than one period to be incorporated into dependent variable, we are *subtracting* the treatment effects from prior treated units from the estimate of future control units. 
 
-- This biases your estimates towards zero when all the treatment effects are the same. 
+  - Recall the issue with `\(\Delta ATT &gt; 0\)` we discussed earlier. 
+
+- This biases TWFE estimates towards zero even though all the treatment effects are positive. 
 
 ---
 # .center.pull[Another Simulation]
 
-- Can we actually get estimates for `\(\color{maroon}{\delta}\)` that are of the *wrong sign*? Yes, if treatment effects for early treated units are larger (in absolute magnitude) than the treatment effects on later treated units. 
+- Can we actually get &lt;span style="color:maroon"&gt; estimates for `\(\color{maroon}{\delta}\)` that are of the *wrong sign* &lt;/span&gt;? Yes, if treatment effects for early treated units are larger (in absolute magnitude) than the treatment effects on later treated units. 
+
+  - In this case, `\(\Delta ATT\)` is positive and larger in absolute magnitude. 
 
 - Let's simulate another example in which units are randomly assigned to one of 20 states. The 20 states are randomly assigned into one of 5 treatment groups `\(G_g\)` based on treatment being initiated in 1993, 1997, 2001, 2005, and 2009. 
 
-- All treated units incorporated in a state in treatment group `\(G_g\)` receive a treatment effect `\(\delta_i \sim N(\delta_g, .2^2)\)`.
+- All treated units incorporated in a state in treatment group `\(G_g\)` receive a treatment effect `\(\delta_i \sim N(\delta_g, 0.04)\)`.
 
-- The treatment effect is cumulative or dynamic - `\(\delta_{it} = \delta_i \times (year - G_g)\)`.
+- The treatment effect is dynamic - `\(\delta_{it} = \delta_i \times (year - G_g)\)`.
 
 ---
 # .center.pull[Another Simulation]
@@ -278,7 +405,7 @@ The coefficients from the regression estimate in (1) recover the same parameters
 &lt;tbody&gt;
   &lt;tr&gt;
    &lt;td style="text-align:center;"&gt; 1993 &lt;/td&gt;
-   &lt;td style="text-align:center;"&gt; 0.5 &lt;/td&gt;
+   &lt;td style="text-align:center;"&gt; 0.7 &lt;/td&gt;
   &lt;/tr&gt;
   &lt;tr&gt;
    &lt;td style="text-align:center;"&gt; 1997 &lt;/td&gt;
@@ -302,9 +429,14 @@ The coefficients from the regression estimate in (1) recover the same parameters
 ---
 # .center.pull[Another Simulation]
 
-- First let's look at the distribution of `\(\color{maroon}{\delta^{DD}}\)` using TWFE estimation with this simulated sample:
+&lt;img src="DID_files/figure-html/d12-1.png" width="720" style="display: block; margin: auto;" /&gt;
 
-&lt;img src="DID_files/figure-html/d8-1.png" width="720" style="display: block; margin: auto;" /&gt;
+---
+# .center.pull[Another Simulation]
+
+- Let's look at the distribution of `\(\color{maroon}{\delta}\)` using TWFE estimation with this simulated sample (red line represents 0 here).
+
+&lt;img src="DID_files/figure-html/d13-1.png" width="720" style="display: block; margin: auto;" /&gt;
 
 ---
 # .center.pull[Goodman-Bacon Decomposition]
@@ -312,68 +444,116 @@ The coefficients from the regression estimate in (1) recover the same parameters
 
 
 
-&lt;img src="DID_files/figure-html/d10-1.png" width="720" style="display: block; margin: auto;" /&gt;
+&lt;img src="DID_files/figure-html/d15-1.png" width="720" style="display: block; margin: auto;" /&gt;
+
 
 ---
-# .center.pull[Callaway &amp; Sant'Anna]
+# .center.pull[Outline of Lecture]
 
-- Inverse propensity weighted (IPW) long-difference in cohort-specific average treatment effects between treated and untreated units for a given treatment cohort. 
+`\(\hspace{2cm}\)`
 
-`$$\begin{equation} ATT(g, t) = \mathbb{E} \left[\left( \frac{G_g}{\mathbb{E}[G_g]} - \frac{\frac{p_g(X)C}{1 - p_g(X)}}{\mathbb{E}\left[\frac{p_g(X)C}{1 - p_g(X)} \right]} \right) \left(Y_t - T_{g - 1}\right)\right] \end{equation}$$`
+1. &lt;span style="color:maroon"&gt; Overview of Difference-in-Differences (DiD) &lt;/span&gt;
 
+2. &lt;span style="color:maroon"&gt; Two-Way Fixed Effects (TWFE) Estimator &lt;/span&gt;
 
-- Without covariates, as in the simulated example here, it calculates the simple long difference between all treated units `\(i\)` in relative year `\(k\)` with all potential control units that have not yet been treated by year `\(k\)`.
+3. &lt;span style="color:maroon"&gt; Problems with Using TWFE Estimator for DiD with Multiple Time Periods &lt;/span&gt;
+
+4. &lt;span style="color:maroon"&gt; Simulation Examples &lt;/span&gt;
+
+5. &lt;span style="color:maroon"&gt; Alternative Difference-in-Differences Estimators &lt;/span&gt;
+
+6. Conclusion and Recommendations
 
 ---
-# .center.pull[Callaway &amp; Sant'Anna]
+# .center.pull[Callaway &amp; Sant'Anna (CS)]
 
-&lt;img src="DID_files/figure-html/d11-1.png" width="720" style="display: block; margin: auto;" /&gt;
+- CS estimator starts with &lt;span style="color:maroon"&gt; group-time average treatment effects - `\(ATT_(g,t)\)` &lt;/span&gt;. 
+
+  - Consider a treatment group `\(g\)` that have `\(t\)` time periods and CS breaks it down to many 2x2 DiD. 
+  
+  - For each 2x2 DiD, estimate `\(ATT_(g,t) = E[Y_t(g)-Y_t(0)|G_g = 1]\)`.
+  
+  - Only &lt;span style="color:maroon"&gt; clean controls (never treated or not yet treated) &lt;/span&gt; are used. 
+
+- There are multiple ways to aggregate group-time average treatment effects. 
+
+  - Aggregate by treatment group `\(g\)`. 
+  
+  - Aggregate by relative time to treatment (event study): `\(t-g=e\)`. 
+  
+  - A single aggregated ATT: `\(t \ge g\)`.
 
 ---
-# .center.pull[Abraham and Sun]
+# .center.pull[Callaway &amp; Sant'Anna (CS)]
 
-- A relatively straightforward extension of the standard event-study TWFE model:
+&lt;img src="DID_files/figure-html/d16-1.png" width="720" style="display: block; margin: auto;" /&gt;
+
+---
+# .center.pull[Sun and Abraham (SA)]
+
+- SA can be viewed as an &lt;span style="color:maroon"&gt; extension of the standard event study TWFE model &lt;/span&gt;:
 
 `$$y_{it} = \alpha_i + \alpha_t + \sum_e \sum_{l \neq -1} \delta_{el}(1\{E_i = e\} \cdot D_{it}^l) + \epsilon_{it}$$`
+  
+  - In the regression above, `\(e\)` denotes treatment group and `\(l\)` denotes relative time to treatment. 
+  
+- Similar to CS estimator, SA estimator also uses &lt;span style="color:maroon"&gt; clean controls (never treated or last treated) &lt;/span&gt;. 
 
-- You saturate the relative time indicators (i.e. t = -2, -1, ...) with indicators for the treatment initiation year group, and aggregate to overall aggregate relative time indicators by cohort size.
+- We saturate the relative time indicators (i.e. t = -2, -1, ...) with treatment group indicators, and aggregate to overall aggregate relative time indicators by cohort size.
 
-- In the case of no covariates, this gives you the same estimate as Callaway &amp; Sant'Anna if you *fully saturate* the model with time indicators (leaving only two relative year identifiers missing).
+- In the case of no covariates, this gives you the same estimate as CS estimator if you fully saturate the model with time indicators (leaving only two relative year identifiers missing).
 
 - The authors don't claim that it can be used with covariates, but it seemingly follows if we think it is okay with normal TWFE DiD. 
 
 ---
-# .center.pull[Abraham and Sun]
-&lt;img src="DID_files/figure-html/d12-1.png" width="720" style="display: block; margin: auto;" /&gt;
+# .center.pull[Sun and Abraham (SA)]
+
+&lt;img src="DID_files/figure-html/d17-1.png" width="720" style="display: block; margin: auto;" /&gt;
+
 
 ---
 # .center.pull[Model Comparison]
 
 - **Callaway &amp; Sant'Anna**
   
-  - Can be *very* flexible in determining which control units to consider, including never-treated and not-yet-treated. 
+  - Can be &lt;span style="color:maroon"&gt; very flexible in determining which control units to use, including never treated and not yet treated &lt;/span&gt;. 
   - Has a more flexible functional form as well (easier to adjust for pre-treatment covariates).
-  - *Doubly robust* estimation: combine propensity score and linear regression so that we will get unbiased estimate if either model specification is correct.
+  - &lt;span style="color:maroon"&gt; Doubly robust &lt;/span&gt; estimation: combine propensity score and outcome regression so that we will get unbiased estimate if either model specification is correct.
 
 - **Abraham &amp; Sun** 
   
-  - Very similar to regular TWFE OLS and hence easy to explain. 
-  - Control units are all units not treated within the data sample. If most of your units are treated by the end (or all), this can make control units very non-representative and restricted.
+  - Very &lt;span style="color:maroon"&gt;similar to regular TWFE &lt;/span&gt; and thus easy to explain. 
+  - Control units are not treated or last treated within the data sample. If most of the units are treated by the end (or all), this can make &lt;span style="color:maroon"&gt; control units very non-representative and restricted &lt;/span&gt;.
 
-- Without covariates, **Callaway &amp; Sant'Anna** and **Abraham &amp; Sun** yield same results. 
+---
+# .center.pull[Outline of Lecture]
+
+`\(\hspace{2cm}\)`
+
+1. &lt;span style="color:maroon"&gt; Overview of Difference-in-Differences (DiD) &lt;/span&gt;
+
+2. &lt;span style="color:maroon"&gt; Two-Way Fixed Effects (TWFE) Estimator &lt;/span&gt;
+
+3. &lt;span style="color:maroon"&gt; Problems with Using TWFE Estimator for DiD with Multiple Time Periods &lt;/span&gt;
+
+4. &lt;span style="color:maroon"&gt; Simulation Examples &lt;/span&gt;
+
+5. &lt;span style="color:maroon"&gt; Alternative Difference-in-Differences Estimators  &lt;/span&gt;
+
+6. &lt;span style="color:maroon"&gt; Conclusion and Recommendations  &lt;/span&gt;
 
 ---
 # .center.pull[What Are The Best Practices?]
 
-- It is still safe to use TWFE DiD when:  
-  - there is only a **single treatment period**; 
-  - the treatment effects are **homogeneous**. 
+- TWFE can produce unbiased estimate of staggered DiD when:  
+  - there is only a &lt;span style="color:maroon"&gt; single treatment period &lt;/span&gt;; 
+  - the treatment effects are &lt;span style="color:maroon"&gt; homogeneous &lt;/span&gt;, however, we usually do not know if the treatments are homogeneous or not. 
 
 - When there are multiple time periods, we should consider to: 
-  - plot the **treatment timing across cohorts**; 
-  - decompose the TWFE estimator with **Bacon-decomposition**. 
+  - plot the &lt;span style="color:maroon"&gt; treatment timing across cohorts &lt;/span&gt;; 
+  - decompose the TWFE estimator with &lt;span style="color:maroon"&gt; Bacon-decomposition &lt;/span&gt;. 
 
-- When using event-study specification, we should **avoid binning relative-time periods** unless we have reasons to believe homogeneous effects apply in the relative-time periods within a bin.
+- When using event-study specification, we should &lt;span style="color:maroon"&gt; avoid binning relative-time periods &lt;/span&gt; unless we have reasons to believe homogeneous effects apply in the relative-time periods within a bin.
 
 ---
 
@@ -385,25 +565,25 @@ The coefficients from the regression estimate in (1) recover the same parameters
 ---
 # .center.pull[What Are The Best Practices?]
 
-- If there is justifiable concern for bias, we should apply at least one of the **alternative estimators**.
+- If there is justifiable concern for bias, we should apply at least one of the &lt;span style="color:maroon"&gt; alternative estimators &lt;/span&gt;.
   - *Callaway &amp; Sant'Anna, Abraham and Sun, de Chaisemartin-D'Haultfoeuille, etc.*
 
-- When using the alternative estimators, we should justify their choice of **clean comparison groups** (not-yet treated, last treated, or never treated) and articulate why the parallel-trends assumption is likely to apply.
+- When using the alternative estimators, we should justify their choice of &lt;span style="color:maroon"&gt; clean comparison groups (never treated or not yet treated) &lt;/span&gt; and articulate why the parallel-trends assumption is likely to apply.
 
-- Regardless of the estimators used, static DiD estimates should be accompanied by **event-study estimates**. 
+- Regardless of the estimators used, static DiD estimates should be accompanied by &lt;span style="color:maroon"&gt; event-study estimates &lt;/span&gt;. 
 
-- It is good practice to use more than one alternative estimators and compare their estimates. However, it is really uncessary to include all the available estimators...
+- It is good practice to use more than one alternative estimators and check if the estimates are consistent. 
 
 ---
 
-# .center.pull[This Is Fine]
+# .center.pull[Five Different Estimators]
 &lt;center&gt;
 
 &lt;img src="https://raw.githubusercontent.com/borusyak/did_imputation/main/five_estimators_example.png", width = "62%"&gt;
 
 ---
 
-# .center.pull[This Is Too Much]
+# .center.pull[Seven Different Estimators]
 &lt;center&gt;
 
 &lt;img src="https://raw.githubusercontent.com/pietrosantoleri/staggered_did/main/output/seven_estimators_example_allt.png", width = "65%"&gt;
@@ -414,13 +594,11 @@ The coefficients from the regression estimate in (1) recover the same parameters
 
 - TWFE estimator is a power tool and we should still use it for DiD when appropriate.
 
-- However, we should make sure we understand what we're doing. DiD is a **comparison of means** and at a minimum we should know which means we're comparing. 
+- However, we should make sure we understand what we're doing. DiD is a &lt;span style="color:maroon"&gt; comparison of means &lt;/span&gt; and at a minimum we should know which means we're comparing. 
 
-- Multiple new methods have been proposed, all of which ensure that you **aren't using prior treated units as controls**. 
+- Multiple new methods have been proposed, all of which ensure that you &lt;span style="color:maroon"&gt; aren't using prior treated units as controls &lt;/span&gt;. 
 
-- You should probably tailor your selection of method to your **data structure**: they use and discard different amount of control units and depending on your setting this might matter. 
-
-- You don't have to use all the new methods in your project! 
+- You should probably tailor your selection of method to your &lt;span style="color:maroon"&gt; data structure &lt;/span&gt;: they use and discard different amount of control units and depending on your setting this might matter. 
 
 ---
 # .center.pull[References]
