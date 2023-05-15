@@ -77,11 +77,36 @@ Let us start with a classic difference-in-differences set-up
 
   - There are 2 units (treated and control) and 2 time periods (0 and 1).
 
-  - The treated unit (T) receives treatment in the second period. 
+  - The treated unit (T) receives treatment in the second period (1). 
 
   - The control unit (C) is never treated;
   
   - We call this a &lt;span style="color:maroon"&gt; 2x2 DiD &lt;/span&gt;.
+
+`\(\hspace{1cm}\)`
+
+&lt;table style="width:30%; margin-left: auto; margin-right: auto; font-size: 12px; margin-left: auto; margin-right: auto; margin-left: auto; margin-right: auto;" class="table table-bordered table table"&gt;
+&lt;caption style="font-size: initial !important;"&gt;&lt;center&gt;&lt;strong&gt;2x2 DiD&lt;/strong&gt;&lt;/center&gt;&lt;/caption&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:center;"&gt; Treatment &lt;/th&gt;
+   &lt;th style="text-align:center;"&gt; Time 0 &lt;/th&gt;
+   &lt;th style="text-align:center;"&gt; Time 1 &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; T &lt;/td&gt;
+   &lt;td style="text-align:center;background-color: lightpink !important;"&gt; 2 &lt;/td&gt;
+   &lt;td style="text-align:center;background-color: lightblue !important;"&gt; 5 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;"&gt; C &lt;/td&gt;
+   &lt;td style="text-align:center;background-color: lightpink !important;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:center;background-color: lightpink !important;"&gt; 2 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
 
 ---
 # .center.pull[Difference-in-Differences]
@@ -255,7 +280,7 @@ The coefficients from the regression estimate in (1) recover the same parameters
 ---
 # .center.pull[Bias with TWFE - Goodman-Bacon (2021)]
 
-- In this example, `\(\color{maroon}{\delta}\)` is the weighted average of the four 2x2 treatment effects. The weights are a function of the &lt;span style="color:maroon"&gt; size of the sub-sample, relative size of treatment and control groups, and treatment variance in the sub-sample &lt;/span&gt;.
+- In this example, `\(\color{maroon}{\hat{\delta}}\)` is the weighted average of the four 2x2 treatment effects. The weights are a function of the &lt;span style="color:maroon"&gt; size of the sub-sample, relative size of treatment and control groups, and treatment variance in the sub-sample &lt;/span&gt;.
 
   - Size `\(N_k\)` is calculated as the sample share. 
   
@@ -263,26 +288,26 @@ The coefficients from the regression estimate in (1) recover the same parameters
   
 - The weights are larger when the size of the sub-sample is larger, treatment and control groups are closer in size, or treatment variance in the sub-sample is larger. 
 
-- All else equal, groups treated closer to middle of panel receive higher weights than those treated earlier or later. This is because such groups have larger treatment variance in the sub-sample. 
+- All else equal, groups treated closer to middle of the time window receive higher weights than those treated earlier or later. This is because such groups have larger treatment variance in the sub-sample. 
 
-- Since the weights are not equal to the sample shares, `\(\color{maroon}{\delta}\)` will not equal the sample `\(ATT\)`. 
+- Since the weights are not equal to the sample shares, `\(\color{maroon}{\hat{\delta}}\)` will not equal the sample `\(ATT\)`. 
 
 ---
 # .center.pull[Bias with TWFE - Goodman-Bacon (2021)]
 
-- The paper further shows that &lt;span style="color:maroon"&gt; `\(\color{maroon}{\delta} = VWATT + VWCT - \Delta ATT\)` &lt;/span&gt;
+- The paper further shows that &lt;span style="color:maroon"&gt; `\(\color{maroon}{\hat{\delta}} = VWATT + VWCT - \Delta ATT\)` &lt;/span&gt;
 
   - `\(VWATT\)`: variance-weighted average treatment effect on the treated. 
   
   - `\(VWCT\)`: variance-weighted common trend.
   
-  - `\(\Delta ATT\)`: weighted sum of the change in `\(ATT\)` within a treatment-timing group's post-period and around a later-treated unit's treatment window. TWFE DiD uses already-treated units as effective control for later-treated units. In case of heterogeneous treatment effect, changes in already treated groups' outcome values will be contaminated by changes in treatment effects over time. 
+  - `\(\Delta ATT\)`: weighted sum of the change in `\(ATT\)` within a treatment-timing group's post-period and around a later-treated unit's treatment window. TWFE DiD uses already-treated units as control for later-treated units. In case of heterogeneous treatment effect, changes in already treated groups' outcome values will be contaminated by changes in treatment effects over time. 
 
 - Two sources of potential bias 
 
-  - Treatment effects vary across units: &lt;span style="color:maroon"&gt; the treatment effects of units treated towards the middle of the time window significantly differ from other treatment effects &lt;/span&gt;, the TWFE DiD is likely biased.  
+  - Treatment effects vary across units: &lt;span style="color:maroon"&gt; if the treatment effects of units treated towards the middle of the time window significantly differ from other treatment effects &lt;/span&gt;, the TWFE DiD is likely biased.  
   
-  - Treatment effects vary across time: &lt;span style="color:maroon"&gt; treatment effect is time-varying within a treated unit, which lead to `\(\Delta ATT &gt; 0\)`. &lt;/span&gt; In this case, TWFE DiD will yield estimates that are too small or even wrong-signed.  
+  - Treatment effects vary across time: &lt;span style="color:maroon"&gt; if treatment effect is time-varying within a treated unit, we will have `\(\Delta ATT &gt; 0\)`. &lt;/span&gt; In this case, TWFE DiD will yield estimates that are too small or even wrong-signed.  
 
 ---
 # .center.pull[Outline of Lecture]
@@ -432,7 +457,7 @@ $$ \frac{(0.3 + 0.6 + ... + 3.3)}{11} = 1.8 $$
 ---
 # .center.pull[Another Simulation]
 
-- Let's look at the distribution of `\(\color{maroon}{\delta}\)` using TWFE estimation with this simulated sample (red line represents 0 here).
+- Let's look at the distribution of `\(\color{maroon}{\hat{\delta}}\)` using TWFE estimation with this simulated sample (red line represents 0 here).
 
 &lt;img src="DID_files/figure-html/d13-1.png" width="720" style="display: block; margin: auto;" /&gt;
 
@@ -463,7 +488,7 @@ $$ \frac{(0.3 + 0.6 + ... + 3.3)}{11} = 1.8 $$
 6. Conclusion and Recommendations
 
 ---
-# .center.pull[Callaway &amp; Sant'Anna (CS)]
+# .center.pull[Callaway and Sant'Anna (CS)]
 
 - CS estimator starts with &lt;span style="color:maroon"&gt; group-time average treatment effects - `\(ATT_(g,t)\)` &lt;/span&gt;. 
 
@@ -482,7 +507,7 @@ $$ \frac{(0.3 + 0.6 + ... + 3.3)}{11} = 1.8 $$
   - A single aggregated ATT: `\(t \ge g\)`.
 
 ---
-# .center.pull[Callaway &amp; Sant'Anna (CS)]
+# .center.pull[Callaway and Sant'Anna (CS)]
 
 &lt;img src="DID_files/figure-html/d16-1.png" width="720" style="display: block; margin: auto;" /&gt;
 
@@ -512,16 +537,16 @@ $$ \frac{(0.3 + 0.6 + ... + 3.3)}{11} = 1.8 $$
 ---
 # .center.pull[Model Comparison]
 
-- **Callaway &amp; Sant'Anna**
+- **Callaway and Sant'Anna**
   
   - Can be &lt;span style="color:maroon"&gt; very flexible in determining which control units to use, including never treated and not yet treated &lt;/span&gt;. 
   - Has a more flexible functional form as well (easier to adjust for pre-treatment covariates).
-  - &lt;span style="color:maroon"&gt; Doubly robust &lt;/span&gt; estimation: combine propensity score and outcome regression so that we will get unbiased estimate if either model specification is correct.
+  - &lt;span style="color:maroon"&gt; Doubly robust estimation &lt;/span&gt;: combine propensity score and outcome regression so that we will get unbiased estimate if either model specification is correct.
 
-- **Abraham &amp; Sun** 
+- **Sun and Abraham** 
   
   - Very &lt;span style="color:maroon"&gt;similar to regular TWFE &lt;/span&gt; and thus easy to explain. 
-  - Control units are not treated or last treated within the data sample. If most of the units are treated by the end (or all), this can make &lt;span style="color:maroon"&gt; control units very non-representative and restricted &lt;/span&gt;.
+  - Control units are never treated or last treated within the data sample. If most of the units are treated by the end (or all), this can make &lt;span style="color:maroon"&gt; control units very non-representative and restricted &lt;/span&gt;.
 
 ---
 # .center.pull[Outline of Lecture]

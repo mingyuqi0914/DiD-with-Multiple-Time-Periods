@@ -81,11 +81,29 @@ Let us start with a classic difference-in-differences set-up
 
   - There are 2 units (treated and control) and 2 time periods (0 and 1).
 
-  - The treated unit (T) receives treatment in the second period. 
+  - The treated unit (T) receives treatment in the second period (1). 
 
   - The control unit (C) is never treated;
   
   - We call this a <span style="color:maroon"> 2x2 DiD </span>.
+
+$\hspace{1cm}$
+
+```{r d0, message = FALSE, warning = FALSE, echo = FALSE, fig.align = 'center', fig.width = 8, cache = TRUE}
+# make data
+data <- tibble(
+  Treatment = c("T", "C"),
+  t0 = c(2,1),
+  t1 = c(5,2)
+)
+
+kbl(data, linesep = "",  col.names = linebreak(c("Treatment", "Time 0", "Time 1")), align = "c", caption = "<center><strong>2x2 DiD</strong></center>", table.attr = "style='width:30%;'") %>%
+  kable_styling(bootstrap_options = "bordered", full_width = T) %>%
+  kable_styling(font_size = 12, position = "center") %>% 
+  kable_styling(latex_options = "hold_position") %>%
+  column_spec(2, background = ifelse(data$t0 > 4, "lightblue", "lightpink")) %>%
+  column_spec(3, background = ifelse(data$t1 > 4, "lightblue", "lightpink")) 
+```
 
 ---
 # .center.pull[Difference-in-Differences]
@@ -450,7 +468,7 @@ p1 + p2 + p3 + p4 + plot_layout(nrow = 2)
 ---
 # .center.pull[Bias with TWFE - Goodman-Bacon (2021)]
 
-- In this example, $\color{maroon}{\delta}$ is the weighted average of the four 2x2 treatment effects. The weights are a function of the <span style="color:maroon"> size of the sub-sample, relative size of treatment and control groups, and treatment variance in the sub-sample </span>.
+- In this example, $\color{maroon}{\hat{\delta}}$ is the weighted average of the four 2x2 treatment effects. The weights are a function of the <span style="color:maroon"> size of the sub-sample, relative size of treatment and control groups, and treatment variance in the sub-sample </span>.
 
   - Size $N_k$ is calculated as the sample share. 
   
@@ -458,26 +476,26 @@ p1 + p2 + p3 + p4 + plot_layout(nrow = 2)
   
 - The weights are larger when the size of the sub-sample is larger, treatment and control groups are closer in size, or treatment variance in the sub-sample is larger. 
 
-- All else equal, groups treated closer to middle of panel receive higher weights than those treated earlier or later. This is because such groups have larger treatment variance in the sub-sample. 
+- All else equal, groups treated closer to middle of the time window receive higher weights than those treated earlier or later. This is because such groups have larger treatment variance in the sub-sample. 
 
-- Since the weights are not equal to the sample shares, $\color{maroon}{\delta}$ will not equal the sample $ATT$. 
+- Since the weights are not equal to the sample shares, $\color{maroon}{\hat{\delta}}$ will not equal the sample $ATT$. 
 
 ---
 # .center.pull[Bias with TWFE - Goodman-Bacon (2021)]
 
-- The paper further shows that <span style="color:maroon"> $\color{maroon}{\delta} = VWATT + VWCT - \Delta ATT$ </span>
+- The paper further shows that <span style="color:maroon"> $\color{maroon}{\hat{\delta}} = VWATT + VWCT - \Delta ATT$ </span>
 
   - $VWATT$: variance-weighted average treatment effect on the treated. 
   
   - $VWCT$: variance-weighted common trend.
   
-  - $\Delta ATT$: weighted sum of the change in $ATT$ within a treatment-timing group's post-period and around a later-treated unit's treatment window. TWFE DiD uses already-treated units as effective control for later-treated units. In case of heterogeneous treatment effect, changes in already treated groups' outcome values will be contaminated by changes in treatment effects over time. 
+  - $\Delta ATT$: weighted sum of the change in $ATT$ within a treatment-timing group's post-period and around a later-treated unit's treatment window. TWFE DiD uses already-treated units as control for later-treated units. In case of heterogeneous treatment effect, changes in already treated groups' outcome values will be contaminated by changes in treatment effects over time. 
 
 - Two sources of potential bias 
 
-  - Treatment effects vary across units: <span style="color:maroon"> the treatment effects of units treated towards the middle of the time window significantly differ from other treatment effects </span>, the TWFE DiD is likely biased.  
+  - Treatment effects vary across units: <span style="color:maroon"> if the treatment effects of units treated towards the middle of the time window significantly differ from other treatment effects </span>, the TWFE DiD is likely biased.  
   
-  - Treatment effects vary across time: <span style="color:maroon"> treatment effect is time-varying within a treated unit, which lead to $\Delta ATT > 0$. </span> In this case, TWFE DiD will yield estimates that are too small or even wrong-signed.  
+  - Treatment effects vary across time: <span style="color:maroon"> if treatment effect is time-varying within a treated unit, we will have $\Delta ATT > 0$. </span> In this case, TWFE DiD will yield estimates that are too small or even wrong-signed.  
 
 ---
 # .center.pull[Outline of Lecture]
@@ -964,7 +982,7 @@ sim3_plot
 ---
 # .center.pull[Another Simulation]
 
-- Let's look at the distribution of $\color{maroon}{\delta}$ using TWFE estimation with this simulated sample (red line represents 0 here).
+- Let's look at the distribution of $\color{maroon}{\hat{\delta}}$ using TWFE estimation with this simulated sample (red line represents 0 here).
 
 ```{r d13, echo = FALSE, warning = FALSE, message = FALSE, fig.align = 'center', cache = TRUE, fig.height = 6, fig.width = 10}
 # set seed
@@ -1145,7 +1163,7 @@ $\hspace{2cm}$
 6. Conclusion and Recommendations
 
 ---
-# .center.pull[Callaway & Sant'Anna (CS)]
+# .center.pull[Callaway and Sant'Anna (CS)]
 
 - CS estimator starts with <span style="color:maroon"> group-time average treatment effects - $ATT_(g,t)$ </span>. 
 
@@ -1164,7 +1182,7 @@ $\hspace{2cm}$
   - A single aggregated ATT: $t \ge g$.
 
 ---
-# .center.pull[Callaway & Sant'Anna (CS)]
+# .center.pull[Callaway and Sant'Anna (CS)]
 
 ```{r d16, echo = FALSE, warning = FALSE, message = FALSE, fig.align = 'center', cache = TRUE, fig.width = 10}
 # create a lead/lag indicators
@@ -1365,16 +1383,16 @@ AS_plot %>%
 ---
 # .center.pull[Model Comparison]
 
-- **Callaway & Sant'Anna**
+- **Callaway and Sant'Anna**
   
   - Can be <span style="color:maroon"> very flexible in determining which control units to use, including never treated and not yet treated </span>. 
   - Has a more flexible functional form as well (easier to adjust for pre-treatment covariates).
-  - <span style="color:maroon"> Doubly robust </span> estimation: combine propensity score and outcome regression so that we will get unbiased estimate if either model specification is correct.
+  - <span style="color:maroon"> Doubly robust estimation </span>: combine propensity score and outcome regression so that we will get unbiased estimate if either model specification is correct.
 
-- **Abraham & Sun** 
+- **Sun and Abraham** 
   
   - Very <span style="color:maroon">similar to regular TWFE </span> and thus easy to explain. 
-  - Control units are not treated or last treated within the data sample. If most of the units are treated by the end (or all), this can make <span style="color:maroon"> control units very non-representative and restricted </span>.
+  - Control units are never treated or last treated within the data sample. If most of the units are treated by the end (or all), this can make <span style="color:maroon"> control units very non-representative and restricted </span>.
 
 ---
 # .center.pull[Outline of Lecture]
