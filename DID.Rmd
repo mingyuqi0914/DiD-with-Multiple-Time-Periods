@@ -433,28 +433,28 @@ make_subplot <- function(omit, keep_dates, colors, breaks, break_expressions, se
           plot.title = element_text(hjust = 0.5, face = "plain"),
           plot.background = element_blank()) 
  }
-p1 <- make_subplot(omit = "l", keep_dates = c(0, 100), colors = c('#E41A1C', '#377EB8'), breaks = 34, 
+p1 <- make_subplot(omit = "l", keep_dates = c(0, 100), colors = c('#E41A1C', '#4DAF4A'), breaks = 34, 
                    break_expressions = expression('t'['k']^'*'), 
                    series = c(expression('y'['it']^'k'), expression('y'['it']^'U')),
                    series_x = c(10, 90), series_y = c(23, 16), 
                    break_names = c('Pre(k)', 'Post(k)'), break_loc = c(17, 66), 
                    arrow_start = c(1, 35), arrow_stop = c(33, 99), 
                    title = paste('A. Early Group vs. Untreated Group'))
-p2 <- make_subplot(omit = "k", keep_dates = c(0, 100), colors = c('#4DAF4A', '#377EB8'), breaks = 85, 
+p2 <- make_subplot(omit = "k", keep_dates = c(0, 100), colors = c('#377EB8', '#4DAF4A'), breaks = 85, 
                    break_expressions = expression('t'['l']^'*'), 
                    series = c(expression('y'['it']^'l'), expression('y'['it']^'U')),
                    series_x = c(50, 90), series_y = c(18, 16), 
                    break_names = c('Pre(l)', 'Post(l)'), break_loc = c(50, 95), 
                    arrow_start = c(1, 86), arrow_stop = c(84, 99), 
                    title = paste('B. Late Group vs. Untreated Group'))
-p3 <- make_subplot(omit = "U", keep_dates = c(0, 84), colors = c('#E41A1C', '#4DAF4A'), breaks = c(34, 85), 
+p3 <- make_subplot(omit = "U", keep_dates = c(0, 84), colors = c('#E41A1C', '#377EB8'), breaks = c(34, 85), 
                    break_expressions = c(expression('t'['k']^'*'), expression('t'['l']^'*')), 
                    series = c(expression('y'['it']^'k'), expression('y'['it']^'l')),
                    series_x = c(10, 50), series_y = c(23, 18), 
                    break_names = c('Pre(k)', 'Mid(k, l)'), break_loc = c(17, 60), 
                    arrow_start = c(1, 35), arrow_stop = c(33, 84), 
                    title = bquote(paste('C. Early Group vs. Late Group, before ', 't'['l']^'*', sep = " ")))
-p4 <- make_subplot(omit = "U", keep_dates = c(34, 100), colors = c('#E41A1C', '#4DAF4A'), breaks = c(34, 85), 
+p4 <- make_subplot(omit = "U", keep_dates = c(34, 100), colors = c('#E41A1C', '#377EB8'), breaks = c(34, 85), 
                    break_expressions = c(expression('t'['k']^'*'), expression('t'['l']^'*')), 
                    series = c(expression('y'['it']^'k'), expression('y'['it']^'l')),
                    series_x = c(60, 50), series_y = c(36, 18), 
