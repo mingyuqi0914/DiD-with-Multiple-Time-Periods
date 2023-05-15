@@ -186,12 +186,12 @@ The coefficients from the regression estimate in (1) recover the same parameters
   
   - `\(TREAT_i\)` and `\(POST_t\)` now subsumed by the unit fixed effects `\(\alpha_i\)` and time fixed effects `\(\alpha_t\)`, respectively.
   
-  - TWFE estimator be easily modified to include covariate matrix `\(X_{it}\)`, time trends, dynamic treatment effects estimation, etc. 
+  - TWFE estimator can be easily modified to include covariate matrix `\(X_{it}\)`, time trends, dynamic treatment effects estimation, etc. 
   
 ---
 # .center.pull[TWFE DiD]
 
-- Recall the beer tax example we used in the lecture on panel data analysis, where each unit is a state, each time period is a year, the treatment is beer tax rate, and the outcome is traffic fatalities. If we treat beer tax as a binary indicator (e.g., whether there is a increase in beer tax), it will be as same as the example we just went over. 
+- Recall the beer tax example we used in the lecture on panel data analysis, where each unit is a state, each time period is a year, the treatment is beer tax rate, and the outcome is traffic fatalities. If we only consider two states and two years and treat beer tax as a binary indicator (e.g., whether there is a increase in beer tax), it will be as same as the example we just went over. 
 
 - TWFE DiD allows us to control for variables that change cross states but are constant over time and variables that change over time but are constant across states. 
 
@@ -234,9 +234,9 @@ The coefficients from the regression estimate in (1) recover the same parameters
   
   - In case of staggered treatment timing and treatment effect heterogeneity, the TWFE DiD estimates are likely biased.
     
-  - The weights are sometimes &lt;span style="color:maroon"&gt; negative &lt;/span&gt;, which is due to the issue that &lt;span style="color:maroon"&gt; already-treated units acting as effective comparison units for not-yet-treated units (bad comparisons) &lt;/span&gt;.
+  - The weights are sometimes &lt;span style="color:maroon"&gt; negative &lt;/span&gt;, which is due to the issue that &lt;span style="color:maroon"&gt; already treated units acting as effective comparison units for not yet treated units (bad comparisons) &lt;/span&gt;.
   
-  - Dynamic effect estimates from event study TWFE estimator cannot help to address the problem above. 
+  - Dynamic effect estimates from event study TWFE estimator cannot help to address the problems described above. 
   
 ---
 # .center.pull[Bias with TWFE - Goodman-Bacon (2021)]
@@ -255,9 +255,9 @@ The coefficients from the regression estimate in (1) recover the same parameters
 ---
 # .center.pull[Bias with TWFE - Goodman-Bacon (2021)]
 
-- `\(\color{maroon}{\delta}\)` is the weighted average of the four 2x2 treatment effects. The weights are a function of the &lt;span style="color:maroon"&gt; size of the sub-sample, relative size of treatment and control groups, and treatment variance in the sub-sample &lt;/span&gt;.
+- In this example, `\(\color{maroon}{\delta}\)` is the weighted average of the four 2x2 treatment effects. The weights are a function of the &lt;span style="color:maroon"&gt; size of the sub-sample, relative size of treatment and control groups, and treatment variance in the sub-sample &lt;/span&gt;.
 
-  - Size `\(N_k\)` is calculated as the share of the full sample. 
+  - Size `\(N_k\)` is calculated as the sample share. 
   
   - For a treatment group that receives treatment at time t, the treatment variance is calculated as `\(\frac{t}{T}\times(1-\frac{t}{T})\)`. 
   
@@ -276,7 +276,7 @@ The coefficients from the regression estimate in (1) recover the same parameters
   
   - `\(VWCT\)`: variance-weighted common trend.
   
-  - `\(\Delta ATT\)`: weighted sum of the change in `\(ATT\)` within a treatment-timing group's post-period and around a later-treated unit's treatment window. TWFE DiD uses already-treated units as effective control for later-treated groups. In case of heterogeneous treatment effect, changes in already-treated groups' outcome values will be contaminated by changes in treatment effects over time. 
+  - `\(\Delta ATT\)`: weighted sum of the change in `\(ATT\)` within a treatment-timing group's post-period and around a later-treated unit's treatment window. TWFE DiD uses already-treated units as effective control for later-treated units. In case of heterogeneous treatment effect, changes in already treated groups' outcome values will be contaminated by changes in treatment effects over time. 
 
 - Two sources of potential bias 
 
@@ -302,15 +302,13 @@ The coefficients from the regression estimate in (1) recover the same parameters
 6. Conclusion and Recommendations
 
 ---
-# .center.pull[Simulation Example]
+# .center.pull[Simulation Examples]
 
 - Consider two sets of DiD estimates - one where the treatment occurs in one period, and one where the treatment is staggered.
 
 - The data generating process (DGP) is linear: `\(y_{it} = \alpha_i + \alpha_t + \color{maroon}{\delta_{it}} + \epsilon_{it}\)`.
   - `\(\alpha_i, \alpha_t \sim N(0, (0.5)^2)\)`
   - `\(\epsilon_{i, t} \sim N\left(0, (0.1)^2\right)\)`
-  
-- We will consider two different treatment assignment set ups for `\(\color{maroon}{\delta_{it}}\)`.
 
 ---
 # .center.pull[Simulation 1 - 1 Period Treatment]
@@ -368,7 +366,7 @@ $$ \frac{(0.3 + 0.6 + ... + 3.3)}{11} = 1.8 $$
 
 - &lt;span style="color:maroon"&gt;  Main problem - we use *early treated units* as controls for later treated units, which violates the *parallel trends assumption*! &lt;span&gt; 
 
-- When the treatment effect is "dynamic", i.e. takes more than one period to be incorporated into dependent variable, we are *subtracting* the treatment effects from prior treated units from the estimate of future control units. 
+- When the treatment effect is "dynamic", i.e. takes more than one period to be incorporated into dependent variable, we are *subtracting* the treatment effects of prior treated units from the estimate of future control units. 
 
   - Recall the issue with `\(\Delta ATT &gt; 0\)` we discussed earlier. 
 
@@ -471,9 +469,9 @@ $$ \frac{(0.3 + 0.6 + ... + 3.3)}{11} = 1.8 $$
 
   - Consider a treatment group `\(g\)` that have `\(t\)` time periods and CS breaks it down to many 2x2 DiD. 
   
-  - For each 2x2 DiD, estimate `\(ATT_(g,t) = E[Y_t(g)-Y_t(0)|G_g = 1]\)`.
-  
-  - Only &lt;span style="color:maroon"&gt; clean controls (never treated or not yet treated) &lt;/span&gt; are used. 
+    - For each 2x2 DiD, estimate `\(ATT_(g,t) = E[Y_t(g)-Y_t(0)|G_g = 1]\)`.
+    
+    - Only &lt;span style="color:maroon"&gt; clean controls (never treated or not yet treated) &lt;/span&gt; are used. 
 
 - There are multiple ways to aggregate group-time average treatment effects. 
 
@@ -501,7 +499,7 @@ $$ \frac{(0.3 + 0.6 + ... + 3.3)}{11} = 1.8 $$
 
 - We saturate the relative time indicators (i.e. t = -2, -1, ...) with treatment group indicators, and aggregate to overall aggregate relative time indicators by cohort size.
 
-- In the case of no covariates, this gives you the same estimate as CS estimator if you fully saturate the model with time indicators (leaving only two relative year identifiers missing).
+- In the case of no covariates, this gives us the same estimate as CS estimator if we fully saturate the model with time indicators (leaving only two relative year identifiers missing).
 
 - The authors don't claim that it can be used with covariates, but it seemingly follows if we think it is okay with normal TWFE DiD. 
 
